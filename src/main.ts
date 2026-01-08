@@ -312,28 +312,380 @@ const createPiece = (type: string, isWhite: boolean, x_coord: number, z_coord: n
   return group
 }
 
+// track pieces with data
+const allPieces: Array<{
+  group: THREE.Group,
+  type: string,
+  isWhite: boolean,
+  x: number,
+  z: number,
+  hasMoved: boolean
+}> = []
+
 //Initialize board with pieces
 // White pieces
-for (let i = 0; i < 8; i++) createPiece('pawn', true, i, 1)
-createPiece('rook', true, 0, 0)
-createPiece('knight', true, 1, 0)
-createPiece('bishop', true, 2, 0)
-createPiece('queen', true, 3, 0)
-createPiece('king', true, 4, 0)
-createPiece('bishop', true, 5, 0)
-createPiece('knight', true, 6, 0)
-createPiece('rook', true, 7, 0)
+for (let i = 0; i < 8; i++) allPieces.push({ group: createPiece('pawn', true, i, 1), type: 'pawn', isWhite: true, x: i, z: 1, hasMoved: false })
+allPieces.push({ group: createPiece('rook', true, 0, 0), type: 'rook', isWhite: true, x: 0, z: 0, hasMoved: false })
+allPieces.push({ group: createPiece('knight', true, 1, 0), type: 'knight', isWhite: true, x: 1, z: 0, hasMoved: false })
+allPieces.push({ group: createPiece('bishop', true, 2, 0), type: 'bishop', isWhite: true, x: 2, z: 0, hasMoved: false })
+allPieces.push({ group: createPiece('queen', true, 3, 0), type: 'queen', isWhite: true, x: 3, z: 0, hasMoved: false })
+allPieces.push({ group: createPiece('king', true, 4, 0), type: 'king', isWhite: true, x: 4, z: 0, hasMoved: false })
+allPieces.push({ group: createPiece('bishop', true, 5, 0), type: 'bishop', isWhite: true, x: 5, z: 0, hasMoved: false })
+allPieces.push({ group: createPiece('knight', true, 6, 0), type: 'knight', isWhite: true, x: 6, z: 0, hasMoved: false })
+allPieces.push({ group: createPiece('rook', true, 7, 0), type: 'rook', isWhite: true, x: 7, z: 0, hasMoved: false })
 
 // Black pieces
-for (let i = 0; i < 8; i++) createPiece('pawn', false, i, 6)
-createPiece('rook', false, 0, 7)
-createPiece('knight', false, 1, 7)
-createPiece('bishop', false, 2, 7)
-createPiece('queen', false, 3, 7)
-createPiece('king', false, 4, 7)
-createPiece('bishop', false, 5, 7)
-createPiece('knight', false, 6, 7)
-createPiece('rook', false, 7, 7)
+for (let i = 0; i < 8; i++) allPieces.push({ group: createPiece('pawn', false, i, 6), type: 'pawn', isWhite: false, x: i, z: 6, hasMoved: false })
+allPieces.push({ group: createPiece('rook', false, 0, 7), type: 'rook', isWhite: false, x: 0, z: 7, hasMoved: false })
+allPieces.push({ group: createPiece('knight', false, 1, 7), type: 'knight', isWhite: false, x: 1, z: 7, hasMoved: false })
+allPieces.push({ group: createPiece('bishop', false, 2, 7), type: 'bishop', isWhite: false, x: 2, z: 7, hasMoved: false })
+allPieces.push({ group: createPiece('queen', false, 3, 7), type: 'queen', isWhite: false, x: 3, z: 7, hasMoved: false })
+allPieces.push({ group: createPiece('king', false, 4, 7), type: 'king', isWhite: false, x: 4, z: 7, hasMoved: false })
+allPieces.push({ group: createPiece('bishop', false, 5, 7), type: 'bishop', isWhite: false, x: 5, z: 7, hasMoved: false })
+allPieces.push({ group: createPiece('knight', false, 6, 7), type: 'knight', isWhite: false, x: 6, z: 7, hasMoved: false })
+allPieces.push({ group: createPiece('rook', false, 7, 7), type: 'rook', isWhite: false, x: 7, z: 7, hasMoved: false })
+
+
+// game state
+let currentTurn: 'white' | 'black' = 'white'
+let gameOver = false
+let enPassantTarget: { x: number, z: number } | null = null // square where en passant is possible
+let lastMove: { piece: any, from: { x: number, z: number }, to: { x: number, z: number } } | null = null
+
+// selection state
+let selectedPiece: { group: THREE.Group, type: string, isWhite: boolean, x: number, z: number } | null = null
+let highlightMeshes: THREE.Mesh[] = []
+
+// mouse 
+const raycaster = new THREE.Raycaster()
+const mouse = new THREE.Vector2()
+
+// helper to find king 
+function findKing(isWhite: boolean) {
+  return allPieces.find(p => p.type === 'king' && p.isWhite === isWhite)
+}
+
+// check if a square is under attack 
+function isSquareUnderAttack(x: number, z: number, byWhite: boolean): boolean {
+  const attackers = allPieces.filter(p => p.isWhite === byWhite)
+
+  for (const attacker of attackers) {
+    const moves = getPossibleMovesRaw(attacker)
+    if (moves.some(m => m.x === x && m.z === z)) {
+      return true
+    }
+  }
+  return false
+}
+
+// check if player is in check
+function isInCheck(isWhite: boolean): boolean {
+  const king = findKing(isWhite)
+  if (!king) return false
+  return isSquareUnderAttack(king.x, king.z, !isWhite)
+}
+
+// check if player is in checkmate
+function isCheckmate(isWhite: boolean): boolean {
+  if (!isInCheck(isWhite)) return false
+
+  // try all moves for all pieces
+  const pieces = allPieces.filter(p => p.isWhite === isWhite)
+  for (const piece of pieces) {
+    const moves = getPossibleMoves(piece)
+    if (moves.length > 0) return false // at least one legal move 
+  }
+  return true
+}
+
+// get possible moves for a piece (simplified chess rules)
+// helper to check if a square is not open
+function getPieceAt(x: number, z: number) {
+  return allPieces.find(p => p.x === x && p.z === z)
+}
+
+// get possible moves (without check validation)
+function getPossibleMovesRaw(piece: { type: string, isWhite: boolean, x: number, z: number }): Array<{ x: number, z: number }> {
+  const moves: Array<{ x: number, z: number }> = []
+
+  // helper to add move if open
+  const addMove = (x: number, z: number) => {
+    if (x < 0 || x >= 8 || z < 0 || z >= 8) return false
+    const target = getPieceAt(x, z)
+    if (target && target.isWhite === piece.isWhite) return false // can't capture own piece
+    moves.push({ x, z })
+    return !target // continue if square is opnn 
+  }
+
+  if (piece.type === 'pawn') {
+    const dir = piece.isWhite ? 1 : -1
+    const startRow = piece.isWhite ? 1 : 6
+
+    // forward 
+    if (!getPieceAt(piece.x, piece.z + dir)) {
+      moves.push({ x: piece.x, z: piece.z + dir })
+
+      // double move from start
+      if (piece.z === startRow && !getPieceAt(piece.x, piece.z + dir * 2)) {
+        moves.push({ x: piece.x, z: piece.z + dir * 2 })
+      }
+    }
+
+    // diagonal 
+    const captureLeft = getPieceAt(piece.x - 1, piece.z + dir)
+    if (captureLeft && captureLeft.isWhite !== piece.isWhite) {
+      moves.push({ x: piece.x - 1, z: piece.z + dir })
+    }
+    const captureRight = getPieceAt(piece.x + 1, piece.z + dir)
+    if (captureRight && captureRight.isWhite !== piece.isWhite) {
+      moves.push({ x: piece.x + 1, z: piece.z + dir })
+    }
+  }
+  else if (piece.type === 'knight') {
+    const offsets = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]]
+    offsets.forEach(([dx, dz]) => addMove(piece.x + dx, piece.z + dz))
+  }
+  else if (piece.type === 'rook') {
+    // horizontal and vertical lines
+    for (let i = piece.x + 1; i < 8; i++) if (!addMove(i, piece.z)) break
+    for (let i = piece.x - 1; i >= 0; i--) if (!addMove(i, piece.z)) break
+    for (let i = piece.z + 1; i < 8; i++) if (!addMove(piece.x, i)) break
+    for (let i = piece.z - 1; i >= 0; i--) if (!addMove(piece.x, i)) break
+  }
+  else if (piece.type === 'bishop') {
+    // diagonal lines
+    for (let i = 1; i < 8; i++) if (!addMove(piece.x + i, piece.z + i)) break
+    for (let i = 1; i < 8; i++) if (!addMove(piece.x + i, piece.z - i)) break
+    for (let i = 1; i < 8; i++) if (!addMove(piece.x - i, piece.z + i)) break
+    for (let i = 1; i < 8; i++) if (!addMove(piece.x - i, piece.z - i)) break
+  }
+  else if (piece.type === 'queen') {
+    // combination of rook and bishop
+    for (let i = piece.x + 1; i < 8; i++) if (!addMove(i, piece.z)) break
+    for (let i = piece.x - 1; i >= 0; i--) if (!addMove(i, piece.z)) break
+    for (let i = piece.z + 1; i < 8; i++) if (!addMove(piece.x, i)) break
+    for (let i = piece.z - 1; i >= 0; i--) if (!addMove(piece.x, i)) break
+    for (let i = 1; i < 8; i++) if (!addMove(piece.x + i, piece.z + i)) break
+    for (let i = 1; i < 8; i++) if (!addMove(piece.x + i, piece.z - i)) break
+    for (let i = 1; i < 8; i++) if (!addMove(piece.x - i, piece.z + i)) break
+    for (let i = 1; i < 8; i++) if (!addMove(piece.x - i, piece.z - i)) break
+  }
+  else if (piece.type === 'king') {
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        if (dx !== 0 || dz !== 0) {
+          addMove(piece.x + dx, piece.z + dz)
+        }
+      }
+    }
+  }
+
+  return moves
+}
+
+// get legal moves (filters out moves that leave king in check)
+function getPossibleMoves(piece: { type: string, isWhite: boolean, x: number, z: number }): Array<{ x: number, z: number }> {
+  const rawMoves = getPossibleMovesRaw(piece)
+  const legalMoves: Array<{ x: number, z: number }> = []
+
+  // simulate each move and check if it leaves king in check
+  for (const move of rawMoves) {
+    // save state
+    const originalX = piece.x
+    const originalZ = piece.z
+    const capturedPiece = getPieceAt(move.x, move.z)
+    const capturedIndex = capturedPiece ? allPieces.indexOf(capturedPiece) : -1
+
+    // simulate move
+    piece.x = move.x
+    piece.z = move.z
+    if (capturedPiece) {
+      allPieces.splice(capturedIndex, 1)
+    }
+
+    // check if king is safe
+    const safe = !isInCheck(piece.isWhite)
+
+    // restore state
+    piece.x = originalX
+    piece.z = originalZ
+    if (capturedPiece && capturedIndex >= 0) {
+      allPieces.splice(capturedIndex, 0, capturedPiece)
+    }
+
+    if (safe) {
+      legalMoves.push(move)
+    }
+  }
+
+  return legalMoves
+}
+
+// clear all highlights
+function clearHighlights() {
+  highlightMeshes.forEach(mesh => scene.remove(mesh))
+  highlightMeshes = []
+}
+
+// highlight possible moves
+function highlightMoves(moves: Array<{ x: number, z: number }>) {
+  clearHighlights()
+
+  moves.forEach(move => {
+    // glow using a canvas texture
+    const canvas = document.createElement('canvas')
+    canvas.width = 128
+    canvas.height = 128
+    const ctx = canvas.getContext('2d')!
+
+    // radial gradient for glow effect
+    const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+    gradient.addColorStop(0, 'rgba(100, 255, 180, 0.6)')
+    gradient.addColorStop(0.5, 'rgba(100, 255, 180, 0.3)')
+    gradient.addColorStop(1, 'rgba(100, 255, 180, 0)')
+
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, 128, 128)
+
+    const texture = new THREE.CanvasTexture(canvas)
+
+    const highlightGeo = new THREE.PlaneGeometry(0.8, 0.8)
+    const highlightMat = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
+    const highlight = new THREE.Mesh(highlightGeo, highlightMat)
+    highlight.rotation.x = -Math.PI / 2
+    const x = (move.x - boardSize / 2 + 0.5) * tileSize
+    const z = (move.z - boardSize / 2 + 0.5) * tileSize
+    highlight.position.set(x, boardHeight + 0.12, z)
+    scene.add(highlight)
+    highlightMeshes.push(highlight)
+  })
+}
+
+// animation state
+let animatingPiece: {
+  group: THREE.Group,
+  startPos: THREE.Vector3,
+  endPos: THREE.Vector3,
+  progress: number,
+  pieceData: { type: string, isWhite: boolean, x: number, z: number }
+} | null = null
+
+// mouse click handler
+function onMouseClick(event: MouseEvent) {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+
+  raycaster.setFromCamera(mouse, camera)
+
+  // if a piece is selected, check if we clicked a legal move square
+  if (selectedPiece) {
+    // check if we clicked on a highlight (legal move)
+    const highlightIntersects = raycaster.intersectObjects(highlightMeshes, false)
+
+
+    if (highlightIntersects.length > 0) {
+      // get the position we clicked
+      const clickedHighlight = highlightIntersects[0].object as THREE.Mesh
+      const targetX = clickedHighlight.position.x
+      const targetZ = clickedHighlight.position.z
+
+      // convert world position back to board coordinates
+      const boardX = Math.round((targetX / tileSize) + boardSize / 2 - 0.5)
+      const boardZ = Math.round((targetZ / tileSize) + boardSize / 2 - 0.5)
+
+      // check if there's a piece to capture
+      const capturedPiece = getPieceAt(boardX, boardZ)
+      if (capturedPiece) {
+        // remove captured piece from scene and array
+        scene.remove(capturedPiece.group)
+        const index = allPieces.indexOf(capturedPiece)
+        if (index > -1) allPieces.splice(index, 1)
+      }
+
+      // start animation
+      const startPos = selectedPiece.group.position.clone()
+      const endPos = new THREE.Vector3(targetX, boardHeight, targetZ)
+
+      animatingPiece = {
+        group: selectedPiece.group,
+        startPos,
+        endPos,
+        progress: 0,
+        pieceData: selectedPiece
+      }
+
+      // update piece position data
+      selectedPiece.x = boardX
+      selectedPiece.z = boardZ
+
+      // switch turns
+      currentTurn = currentTurn === 'white' ? 'black' : 'white'
+
+      // check for check/checkmate
+      if (isInCheck(currentTurn === 'white')) {
+        if (isCheckmate(currentTurn === 'white')) {
+          console.log(`Checkmate! ${currentTurn === 'white' ? 'Black' : 'White'} wins!`)
+          gameOver = true
+        } else {
+          console.log(`${currentTurn === 'white' ? 'White' : 'Black'} is in check!`)
+        }
+      }
+
+      // clear selection and highlights
+      selectedPiece = null
+      clearHighlights()
+
+      return
+
+    }
+  }
+
+  // check if we clicked a piece
+  const allMeshes = allPieces.flatMap(p => p.group.children)
+  const intersects = raycaster.intersectObjects(allMeshes, false)
+
+  if (intersects.length > 0 && !gameOver) {
+    // find which piece was clicked
+    const clickedMesh = intersects[0].object
+    const clickedPiece = allPieces.find(p => p.group.children.includes(clickedMesh))
+
+    if (clickedPiece) {
+      // only allow selecting pieces of current turn
+      const isWhiteTurn = currentTurn === 'white'
+      if (clickedPiece.isWhite !== isWhiteTurn) {
+        console.log(`It's ${currentTurn}'s turn!`)
+        return
+      }
+
+      // deselect previous piece
+      if (selectedPiece) {
+        selectedPiece.group.position.y = boardHeight
+      }
+
+      // select new piece
+      selectedPiece = clickedPiece
+      selectedPiece.group.position.y = boardHeight + 0.3
+
+      // show possible moves
+      const moves = getPossibleMoves(selectedPiece)
+      highlightMoves(moves)
+    }
+  } else {
+    // clicked empty space
+    if (selectedPiece) {
+      selectedPiece.group.position.y = boardHeight
+      selectedPiece = null
+      clearHighlights()
+    }
+  }
+}
+
+window.addEventListener('click', onMouseClick)
 
 // resize
 window.addEventListener('resize', () => {
@@ -345,6 +697,29 @@ window.addEventListener('resize', () => {
 // animation
 function animate() {
   requestAnimationFrame(animate)
+
+  // piece animation
+  if (animatingPiece) {
+    animatingPiece.progress += 0.08 // animation speed
+
+    if (animatingPiece.progress >= 1) {
+      // animation 
+      animatingPiece.group.position.copy(animatingPiece.endPos)
+      animatingPiece = null
+    } else {
+      // smooth easing 
+      const t = animatingPiece.progress
+      const eased = 1 - Math.pow(1 - t, 3)
+
+      // interpolate position
+      animatingPiece.group.position.lerpVectors(
+        animatingPiece.startPos,
+        animatingPiece.endPos,
+        eased
+      )
+    }
+  }
+
   controls.update()
   renderer.render(scene, camera)
 }
