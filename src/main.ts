@@ -46,38 +46,100 @@ directionalLight.shadow.camera.top = 10
 directionalLight.shadow.camera.bottom = -10
 scene.add(directionalLight)
 
-// set up board chess
+// enviornment mapping 
+const pmremGenerator = new THREE.PMREMGenerator(renderer)
+pmremGenerator.compileEquirectangularShader()
+// reflections
+const roomScene = new THREE.Scene()
+const roomLight = new THREE.PointLight(0xffffff, 50, 10)
+roomLight.position.set(2, 2, 2)
+roomScene.add(roomLight)
+const envMap = pmremGenerator.fromScene(roomScene).texture
+
+// board
 const boardSize = 8
 const tileSize = 1
-const boardHeight = 0.1
+const boardHeight = 0.2
+const bevelSize = 0.05
+
+function createBeveledBox(w: number, h: number, d: number, bevel: number, material: THREE.Material) {
+  const shape = new THREE.Shape()
+  shape.moveTo(-w / 2, -d / 2)
+  shape.lineTo(w / 2, -d / 2)
+  shape.lineTo(w / 2, d / 2)
+  shape.lineTo(-w / 2, d / 2)
+  shape.lineTo(-w / 2, -d / 2)
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: h,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelOffset: 0,
+    bevelSegments: 3
+  }
+
+  const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.rotation.x = -Math.PI / 2
+  mesh.castShadow = true
+  mesh.receiveShadow = true
+  return mesh
+}
 
 // board group
 const boardGroup = new THREE.Group()
 scene.add(boardGroup)
 
+// materials
+const lightMaterial = new THREE.MeshStandardMaterial({
+  color: 0xe0d6c3,
+  roughness: 0.15,
+  metalness: 0.05,
+  envMap: envMap,
+  envMapIntensity: 0.5
+})
+
+const darkMaterial = new THREE.MeshStandardMaterial({
+  color: 0x221108,
+  roughness: 0.1,
+  metalness: 0.1,
+  envMap: envMap,
+  envMapIntensity: 0.8
+})
+
+const baseMaterial = new THREE.MeshStandardMaterial({
+  color: 0x150a05, // even darker base
+  roughness: 0.3,
+  metalness: 0.0,
+  envMap: envMap,
+  envMapIntensity: 0.3
+})
+
 // board base
-const baseGeometry = new THREE.BoxGeometry(boardSize * tileSize + 0.4, boardHeight, boardSize * tileSize + 0.4)
-const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x442200 }) // wooden dark brown
-const base = new THREE.Mesh(baseGeometry, baseMaterial)
-base.position.y = boardHeight / 2
-base.receiveShadow = true
-boardGroup.add(base)
+const baseMesh = createBeveledBox(
+  boardSize * tileSize + 0.6,
+  boardHeight,
+  boardSize * tileSize + 0.6,
+  0.05,
+  baseMaterial
+)
+baseMesh.position.y = -bevelSize // adjust for thickness
+boardGroup.add(baseMesh)
 
-// squares
-const lightSquareMaterial = new THREE.MeshStandardMaterial({ color: 0xeeeeee })
-const darkSquareMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 })
-
+// individual squares
 for (let i = 0; i < boardSize; i++) {
   for (let j = 0; j < boardSize; j++) {
-    const squareGeometry = new THREE.PlaneGeometry(tileSize, tileSize)
-    const material = (i + j) % 2 === 0 ? lightSquareMaterial : darkSquareMaterial
-    const square = new THREE.Mesh(squareGeometry, material)
+    const isLight = (i + j) % 2 === 0
+    const mat = isLight ? lightMaterial : darkMaterial
 
-    square.rotation.x = -Math.PI / 2
+    //thinner squares on top of the base
+    const square = createBeveledBox(tileSize, 0.05, tileSize, 0.01, mat)
+
     square.position.x = (i - boardSize / 2 + 0.5) * tileSize
     square.position.z = (j - boardSize / 2 + 0.5) * tileSize
-    square.position.y = boardHeight + 0.001 // slightly above base
-    square.receiveShadow = true
+    square.position.y = boardHeight - 0.02 // embedded or on top
     boardGroup.add(square)
   }
 }
