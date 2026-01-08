@@ -353,7 +353,7 @@ let enPassantTarget: { x: number, z: number } | null = null // square where en p
 let lastMove: { piece: any, from: { x: number, z: number }, to: { x: number, z: number } } | null = null
 
 // selection state
-let selectedPiece: { group: THREE.Group, type: string, isWhite: boolean, x: number, z: number } | null = null
+let selectedPiece: { group: THREE.Group, type: string, isWhite: boolean, x: number, z: number, hasMoved: boolean } | null = null
 let highlightMeshes: THREE.Mesh[] = []
 
 // mouse 
@@ -440,6 +440,16 @@ function getPossibleMovesRaw(piece: { type: string, isWhite: boolean, x: number,
     if (captureRight && captureRight.isWhite !== piece.isWhite) {
       moves.push({ x: piece.x + 1, z: piece.z + dir })
     }
+
+    // En Passant
+    if (lastMove && lastMove.piece.type === 'pawn' && lastMove.piece.isWhite !== piece.isWhite) {
+      const movedTwoSquares = Math.abs(lastMove.to.z - lastMove.from.z) === 2
+      const isAdjacent = lastMove.to.z === piece.z && Math.abs(lastMove.to.x - piece.x) === 1
+
+      if (movedTwoSquares && isAdjacent) {
+        moves.push({ x: lastMove.to.x, z: piece.z + dir })
+      }
+    }
   }
   else if (piece.type === 'knight') {
     const offsets = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]]
@@ -484,7 +494,7 @@ function getPossibleMovesRaw(piece: { type: string, isWhite: boolean, x: number,
 }
 
 // get legal moves (filters out moves that leave king in check)
-function getPossibleMoves(piece: { type: string, isWhite: boolean, x: number, z: number }): Array<{ x: number, z: number }> {
+function getPossibleMoves(piece: { type: string, isWhite: boolean, x: number, z: number, hasMoved: boolean }): Array<{ x: number, z: number }> {
   const rawMoves = getPossibleMovesRaw(piece)
   const legalMoves: Array<{ x: number, z: number }> = []
 
@@ -515,6 +525,31 @@ function getPossibleMoves(piece: { type: string, isWhite: boolean, x: number, z:
 
     if (safe) {
       legalMoves.push(move)
+    }
+  }
+
+  // Castling
+  if (piece.type === 'king' && !piece.hasMoved && !isInCheck(piece.isWhite)) {
+    const z = piece.isWhite ? 0 : 7
+
+    // Kingside (x=6)
+    const rookK = allPieces.find(p => p.type === 'rook' && p.isWhite === piece.isWhite && p.x === 7 && p.z === z)
+    if (rookK && !rookK.hasMoved) {
+      const pathEmpty = !getPieceAt(5, z) && !getPieceAt(6, z)
+      const pathSafe = !isSquareUnderAttack(5, z, !piece.isWhite) && !isSquareUnderAttack(6, z, !piece.isWhite)
+      if (pathEmpty && pathSafe) {
+        legalMoves.push({ x: 6, z })
+      }
+    }
+
+    // Queenside (x=2)
+    const rookQ = allPieces.find(p => p.type === 'rook' && p.isWhite === piece.isWhite && p.x === 0 && p.z === z)
+    if (rookQ && !rookQ.hasMoved) {
+      const pathEmpty = !getPieceAt(1, z) && !getPieceAt(2, z) && !getPieceAt(3, z)
+      const pathSafe = !isSquareUnderAttack(2, z, !piece.isWhite) && !isSquareUnderAttack(3, z, !piece.isWhite)
+      if (pathEmpty && pathSafe) {
+        legalMoves.push({ x: 2, z })
+      }
     }
   }
 
@@ -566,6 +601,8 @@ function highlightMoves(moves: Array<{ x: number, z: number }>) {
   })
 }
 
+
+
 // animation state
 let animatingPiece: {
   group: THREE.Group,
@@ -598,7 +635,34 @@ function onMouseClick(event: MouseEvent) {
       const boardX = Math.round((targetX / tileSize) + boardSize / 2 - 0.5)
       const boardZ = Math.round((targetZ / tileSize) + boardSize / 2 - 0.5)
 
-      // check if there's a piece to capture
+      // check for castling move
+      if (selectedPiece.type === 'king' && Math.abs(boardX - selectedPiece.x) === 2) {
+        const isKingside = boardX > selectedPiece.x
+        const rookX = isKingside ? 7 : 0
+        const rookTargetX = isKingside ? 5 : 3
+        const rook = allPieces.find(p => p.type === 'rook' && p.isWhite === selectedPiece.isWhite && p.x === rookX && p.z === boardZ)
+        if (rook) {
+          // move rook immediately (or could animate, but let's keep it simple for now)
+          const rx = (rookTargetX - boardSize / 2 + 0.5) * tileSize
+          const rz = (boardZ - boardSize / 2 + 0.5) * tileSize
+          rook.group.position.set(rx, boardHeight, rz)
+          rook.x = rookTargetX
+          rook.hasMoved = true
+        }
+      }
+
+      // check for En Passant capture
+      if (selectedPiece.type === 'pawn' && boardX !== selectedPiece.x && !getPieceAt(boardX, boardZ)) {
+        const captureZ = selectedPiece.z // The enemy pawn is on the same rank as the start position
+        const capturedPawn = getPieceAt(boardX, captureZ)
+        if (capturedPawn && capturedPawn.type === 'pawn' && capturedPawn.isWhite !== selectedPiece.isWhite) {
+          scene.remove(capturedPawn.group)
+          const index = allPieces.indexOf(capturedPawn)
+          if (index > -1) allPieces.splice(index, 1)
+        }
+      }
+
+      // check if there's a piece to capture (normal capture)
       const capturedPiece = getPieceAt(boardX, boardZ)
       if (capturedPiece) {
         // remove captured piece from scene and array
@@ -620,8 +684,10 @@ function onMouseClick(event: MouseEvent) {
       }
 
       // update piece position data
+      lastMove = { piece: selectedPiece, from: { x: selectedPiece.x, z: selectedPiece.z }, to: { x: boardX, z: boardZ } }
       selectedPiece.x = boardX
       selectedPiece.z = boardZ
+      selectedPiece.hasMoved = true
 
       // switch turns
       currentTurn = currentTurn === 'white' ? 'black' : 'white'
