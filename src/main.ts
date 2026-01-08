@@ -37,8 +37,6 @@ style.textContent = `
     border-bottom: 1px solid #333;
     padding-bottom: 15px;
   }
-    padding-bottom: 15px;
-  }
   #move-history {
     margin-top: 15px;
     font-size: 13px;
@@ -82,6 +80,12 @@ sidebar.id = 'ui-sidebar'
 sidebar.innerHTML = `
   <h2>Match Details</h2>
   <div class="status" id="game-status">White's Turn</div>
+  <div id="move-history">
+    <table>
+      <thead><tr><th>#</th><th>W</th><th>B</th></tr></thead>
+      <tbody id="move-list"></tbody>
+    </table>
+  </div>
   <div id="promotion-area" style="display:none">
     <div style="font-size: 12px; margin-bottom: 10px; color:#aaa;">Pawn Promotion</div>
     <div class="promotion-options">
@@ -501,7 +505,7 @@ allPieces.push({ group: createPiece('rook', false, 7, 7), type: 'rook', isWhite:
 // game state
 let currentTurn: 'white' | 'black' = 'white'
 let gameOver = false
-let lastMove: { piece: any, from: { x: number, z: number }, to: { x: number, z: number } } | null = null
+let lastMove: { piece: any, from: { x: number, z: number }, to: { x: number, z: number }, isCapture?: boolean } | null = null
 
 // selection state
 let selectedPiece: { group: THREE.Group, type: string, isWhite: boolean, x: number, z: number, hasMoved: boolean } | null = null
@@ -764,7 +768,59 @@ let animatingPiece: {
 } | null = null
 
 
+let moveNumber = 1
+
+function toChessNotation(move: any) {
+  if (!move) return ""
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+  const ranks = ['1', '2', '3', '4', '5', '6', '7', '8']
+
+  const fromFile = files[move.from.x]
+  const rank = ranks[move.to.z]
+  const file = files[move.to.x]
+
+  if (move.piece.type === 'pawn') {
+    if (move.isCapture) {
+      return fromFile + 'x' + file + rank
+    }
+    return file + rank
+  }
+
+  if (move.piece.type === 'king') {
+    if (Math.abs(move.to.x - move.from.x) > 1) {
+      return move.to.x > move.from.x ? "O-O" : "O-O-O"
+    }
+  }
+
+  const pieceChar = move.piece.type === 'knight' ? 'N' : move.piece.type[0].toUpperCase()
+  return pieceChar + (move.isCapture ? 'x' : '') + file + rank
+}
+
+function updateMoveHistory(moveText: string, isWhite: boolean) {
+  const list = document.getElementById('move-list')
+  if (!list) return
+
+  if (isWhite) {
+    const row = document.createElement('tr')
+    row.innerHTML = `<td>${moveNumber}.</td><td>${moveText}</td><td></td>`
+    list.appendChild(row)
+    list.scrollTop = list.scrollHeight
+  } else {
+    const rows = list.querySelectorAll('tr')
+    const lastRow = rows[rows.length - 1]
+    if (lastRow) {
+      lastRow.children[2].textContent = moveText
+    }
+    moveNumber++
+  }
+}
+
 function finalizeTurn(overrideTurn?: string) {
+  if (lastMove) {
+    const notation = toChessNotation(lastMove)
+    updateMoveHistory(notation, lastMove.piece.isWhite)
+  }
+
   console.log("finalizeTurn called. Old Turn:", currentTurn, "Override:", overrideTurn)
   // switch turns
   if (overrideTurn) {
@@ -834,6 +890,8 @@ function onMouseClick(event: MouseEvent) {
         }
       }
 
+      let isCapture = false
+
       // check for En Passant capture
       if (selectedPiece.type === 'pawn' && boardX !== selectedPiece.x && !getPieceAt(boardX, boardZ)) {
         const captureZ = selectedPiece.z // The enemy pawn is on the same rank as the start position
@@ -842,6 +900,7 @@ function onMouseClick(event: MouseEvent) {
           scene.remove(capturedPawn.group)
           const index = allPieces.indexOf(capturedPawn)
           if (index > -1) allPieces.splice(index, 1)
+          isCapture = true
         }
       }
 
@@ -852,6 +911,7 @@ function onMouseClick(event: MouseEvent) {
         scene.remove(capturedPiece.group)
         const index = allPieces.indexOf(capturedPiece)
         if (index > -1) allPieces.splice(index, 1)
+        isCapture = true
       }
 
       // start animation
@@ -867,7 +927,7 @@ function onMouseClick(event: MouseEvent) {
       }
 
       // update piece position data
-      lastMove = { piece: selectedPiece, from: { x: selectedPiece.x, z: selectedPiece.z }, to: { x: boardX, z: boardZ } }
+      lastMove = { piece: selectedPiece, from: { x: selectedPiece.x, z: selectedPiece.z }, to: { x: boardX, z: boardZ }, isCapture }
       selectedPiece.x = boardX
       selectedPiece.z = boardZ
       selectedPiece.hasMoved = true
