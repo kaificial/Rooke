@@ -79,6 +79,13 @@ const sidebar = document.createElement('div')
 sidebar.id = 'ui-sidebar'
 sidebar.innerHTML = `
   <h2>Match Details</h2>
+  <div style="margin-bottom: 15px;">
+    <button id="start-game-btn" style="width:100%; padding: 10px; background:#222; border:1px solid #444; color:#fff; font-family:'Inter'; text-transform:uppercase; font-size:11px; letter-spacing:2px; font-weight:600; cursor:pointer; transition:background 0.2s;">Start Game</button>
+  </div>
+  <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-family:'Inter'; font-size:12px; color:#888; border-bottom:1px solid #333; padding-bottom:15px;">
+     <div style="display:flex; align-items:center;">WHITE <span id="white-timer" style="color:#fff; font-weight:600; margin-left:8px; font-feature-settings:'tnum';">10:00</span></div>
+     <div style="display:flex; align-items:center;">BLACK <span id="black-timer" style="color:#fff; font-weight:600; margin-left:8px; font-feature-settings:'tnum';">10:00</span></div>
+  </div>
   <div class="status" id="game-status">White's Turn</div>
   <div id="move-history">
     <table>
@@ -97,7 +104,157 @@ sidebar.innerHTML = `
   </div>
 `
 document.body.appendChild(sidebar)
-sidebar.style.display = 'block' // show initially
+// Landing Page Implementation
+const landingStyle = document.createElement('style')
+landingStyle.textContent = `
+  #landing-page {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+    background: #f8f8f8;
+    color: #111;
+    z-index: 2000;
+    display: flex;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  #landing-page .sidebar-left {
+    width: 60px;
+    background: #111;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #landing-page .brand-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    color: #ccb066;
+    font-weight: 600;
+    letter-spacing: 4px;
+    font-size: 14px;
+    transform: rotate(180deg);
+  }
+
+  #landing-page .main-content {
+    flex: 1;
+    padding: 60px 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #fff;
+    position: relative;
+  }
+  
+  #landing-page nav {
+    position: absolute; top: 40px; left: 100px;
+    display: flex; gap: 30px;
+    font-size: 12px; font-weight: 600; color: #888; letter-spacing: 1px;
+  }
+  
+  #landing-page .version-tag {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #ccb066;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600;
+  }
+  #landing-page .version-tag::before {
+    content: ''; width: 20px; height: 1px; background: #ccb066; display: block;
+  }
+
+  #landing-page h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 80px;
+    line-height: 1.1;
+    font-weight: 400;
+    margin: 0 0 30px 0;
+    color: #111;
+  }
+  
+  #landing-page h1 .accent {
+    font-style: italic;
+    color: #ccb066;
+  }
+
+  #landing-page .subtitle {
+    font-size: 16px;
+    color: #666;
+    max-width: 500px;
+    line-height: 1.6;
+    margin-bottom: 50px;
+    padding-left: 20px;
+    border-left: 2px solid #eee;
+  }
+
+  #landing-page .actions { display: flex; gap: 20px; }
+  
+  button.landing-btn {
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 15px 40px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+  button.landing-btn.outline {
+    background: transparent;
+    color: #111;
+    border: 1px solid #ddd;
+  }
+  button.landing-btn:hover {
+    background: #333;
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  #landing-page .right-panel {
+    width: 35%;
+    background: #151515;
+    background-image: linear-gradient(45deg, #111 25%, #1a1a1a 25%, #1a1a1a 50%, #111 50%, #111 75%, #1a1a1a 75%, #1a1a1a 100%);
+    background-size: 40px 40px;
+  }
+`
+document.head.appendChild(landingStyle)
+
+const landing = document.createElement('div')
+landing.id = 'landing-page'
+landing.innerHTML = `
+  <div class="sidebar-left">
+     <div class="brand-vertical">ROOKE ENGINE</div>
+  </div>
+  <div class="main-content">
+     <nav>
+        <span>LIBRARY</span>
+        <span>PUZZLES</span>
+        <span>LEARN</span>
+     </nav>
+     <div class="hero">
+         <div class="version-tag">BETA VERSION 1.0</div>
+         <h1>Master the Game <br> of <span class="accent">Kings</span></h1>
+         <p class="subtitle">Experience the next generation of 3D chess simulation. Beautiful, responsive, and completely in your browser.</p>
+         <div class="actions">
+             <button id="enter-btn" class="landing-btn">ENTER SANDBOX</button>
+             <button id="demo-btn" class="landing-btn outline">VIEW DEMO</button>
+         </div>
+     </div>
+  </div>
+  <div class="right-panel"></div>
+`
+document.body.appendChild(landing)
+
+document.getElementById('enter-btn')?.addEventListener('click', () => {
+  landing.style.transition = 'opacity 0.8s ease'
+  landing.style.opacity = '0'
+  setTimeout(() => {
+    landing.remove()
+    sidebar.style.display = 'block'
+  }, 800)
+})
 
 // show/hide promotion UI
 let pendingPromotion: { pieceData: any } | null = null
