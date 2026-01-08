@@ -3,6 +3,144 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 
+// UI overlay
+const style = document.createElement('style')
+style.textContent = `
+  #ui-sidebar {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    width: 250px;
+    background: rgba(10, 10, 10, 0.95);
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 20px;
+    color: #eee;
+    font-family: 'Inter', sans-serif;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 1000;
+  }
+  #ui-sidebar h2 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  #ui-sidebar .status {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 15px;
+  }
+  .promotion-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .promotion-btn {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .promotion-btn:hover {
+    background: #333;
+    border-color: #666;
+    color: #fff;
+  }
+`
+document.head.appendChild(style)
+
+// UI sidebar
+const sidebar = document.createElement('div')
+sidebar.id = 'ui-sidebar'
+sidebar.innerHTML = `
+  <h2>Match Details</h2>
+  <div class="status" id="game-status">White's Turn</div>
+  <div id="promotion-area" style="display:none">
+    <div style="font-size: 12px; margin-bottom: 10px; color:#aaa;">Pawn Promotion</div>
+    <div class="promotion-options">
+      <div class="promotion-btn" data-type="queen">Queen</div>
+      <div class="promotion-btn" data-type="rook">Rook</div>
+      <div class="promotion-btn" data-type="bishop">Bishop</div>
+      <div class="promotion-btn" data-type="knight">Knight</div>
+    </div>
+  </div>
+`
+document.body.appendChild(sidebar)
+sidebar.style.display = 'block' // show initially
+
+// show/hide promotion UI
+let pendingPromotion: { pieceData: any } | null = null
+
+function showPromotionUI(pieceData: any) {
+  pendingPromotion = { pieceData }
+  const promoArea = document.getElementById('promotion-area')!
+  const statusEl = document.getElementById('game-status')!
+
+  if (promoArea) {
+    promoArea.style.display = 'block'
+    statusEl.innerText = "Select Promotion"
+  }
+}
+
+function hidePromotionUI() {
+  const promoArea = document.getElementById('promotion-area')!
+  const statusEl = document.getElementById('game-status')!
+
+  if (promoArea) {
+    promoArea.style.display = 'none'
+    statusEl.innerText = (currentTurn === 'white' ? "White" : "Black") + "'s Turn"
+  }
+  pendingPromotion = null
+}
+
+// handle promotion selection
+document.querySelectorAll('.promotion-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation()
+    if (!pendingPromotion) return
+
+    const p = pendingPromotion.pieceData
+
+    try {
+      // @ts-ignore
+      const type = e.target.getAttribute('data-type')
+
+      console.log("Promoting piece:", p, "to", type)
+
+      // Remove pawn
+      if (p.group) scene.remove(p.group)
+
+      // Create new piece
+      const newGroup = createPiece(type, p.isWhite, p.x, p.z)
+      p.group = newGroup
+      p.type = type
+
+      console.log("Promotion success")
+    } catch (err) {
+      console.error("Promotion Logic Failed", err)
+    } finally {
+      hidePromotionUI()
+      console.log("Finalizing turn...")
+      const nextTurn = p.isWhite ? 'black' : 'white'
+      finalizeTurn(nextTurn as any)
+    }
+  })
+})
+
+
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x000000)
 
@@ -349,7 +487,6 @@ allPieces.push({ group: createPiece('rook', false, 7, 7), type: 'rook', isWhite:
 // game state
 let currentTurn: 'white' | 'black' = 'white'
 let gameOver = false
-let enPassantTarget: { x: number, z: number } | null = null // square where en passant is possible
 let lastMove: { piece: any, from: { x: number, z: number }, to: { x: number, z: number } } | null = null
 
 // selection state
@@ -609,13 +746,45 @@ let animatingPiece: {
   startPos: THREE.Vector3,
   endPos: THREE.Vector3,
   progress: number,
-  pieceData: { type: string, isWhite: boolean, x: number, z: number }
+  pieceData: any
 } | null = null
 
-// mouse click handler
+
+function finalizeTurn(overrideTurn?: string) {
+  console.log("finalizeTurn called. Old Turn:", currentTurn, "Override:", overrideTurn)
+  // switch turns
+  if (overrideTurn) {
+    currentTurn = overrideTurn
+  } else {
+    currentTurn = currentTurn === 'white' ? 'black' : 'white'
+  }
+  console.log("New Turn:", currentTurn)
+
+  let statusText = (currentTurn === 'white' ? "White" : "Black") + "'s Turn"
+
+  // check for check/checkmate
+  if (isInCheck(currentTurn === 'white')) {
+    if (isCheckmate(currentTurn === 'white')) {
+      statusText = `Checkmate! ${currentTurn === 'white' ? "Black" : "White"} Wins!`
+      console.log(statusText)
+      gameOver = true
+    } else {
+      statusText += " (CHECK)"
+      console.log(`${currentTurn === 'white' ? 'White' : 'Black'} is in check!`)
+    }
+  }
+
+  const statusEl = document.getElementById('game-status')
+  if (statusEl) statusEl.innerText = statusText
+}
+
 function onMouseClick(event: MouseEvent) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+
+  console.log("Click. P/A:", !!pendingPromotion, !!animatingPiece, "GO:", gameOver)
+
+  if (animatingPiece || pendingPromotion) return
 
   raycaster.setFromCamera(mouse, camera)
 
@@ -689,18 +858,6 @@ function onMouseClick(event: MouseEvent) {
       selectedPiece.z = boardZ
       selectedPiece.hasMoved = true
 
-      // switch turns
-      currentTurn = currentTurn === 'white' ? 'black' : 'white'
-
-      // check for check/checkmate
-      if (isInCheck(currentTurn === 'white')) {
-        if (isCheckmate(currentTurn === 'white')) {
-          console.log(`Checkmate! ${currentTurn === 'white' ? 'Black' : 'White'} wins!`)
-          gameOver = true
-        } else {
-          console.log(`${currentTurn === 'white' ? 'White' : 'Black'} is in check!`)
-        }
-      }
 
       // clear selection and highlights
       selectedPiece = null
@@ -771,6 +928,15 @@ function animate() {
     if (animatingPiece.progress >= 1) {
       // animation 
       animatingPiece.group.position.copy(animatingPiece.endPos)
+
+      // Check for promotion
+      const p = animatingPiece.pieceData
+      if (p.type === 'pawn' && (p.z === 0 || p.z === 7)) {
+        showPromotionUI(p)
+      } else {
+        finalizeTurn()
+      }
+
       animatingPiece = null
     } else {
       // smooth easing 
