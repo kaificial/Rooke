@@ -146,55 +146,194 @@ for (let i = 0; i < boardSize; i++) {
 
 
 
-// set up pieces for reference
-function createPawn(color: number, x_coord: number, z_coord: number) {
+// pieces mats
+const ivoryMaterial = new THREE.MeshStandardMaterial({
+  color: 0xfffffc,
+  roughness: 0.2,
+  metalness: 0.1,
+  envMap: envMap,
+  envMapIntensity: 0.4
+})
+
+const ebonyMaterial = new THREE.MeshStandardMaterial({
+  color: 0x2a2a2a, // lighter than black to stand out
+  roughness: 0.15,
+  metalness: 0.3,
+  envMap: envMap,
+  envMapIntensity: 1.2 // stronger reflections
+})
+
+const createPiece = (type: string, isWhite: boolean, x_coord: number, z_coord: number) => {
   const group = new THREE.Group()
+  const material = isWhite ? ivoryMaterial : ebonyMaterial
 
-  const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.3, 0.4, 0.1, 32),
-    new THREE.MeshStandardMaterial({ color })
-  )
-  base.position.y = 0.05
-  base.castShadow = true
-  base.receiveShadow = true
-  group.add(base)
+  const createLathePiece = (points: THREE.Vector2[]) => {
+    const geo = new THREE.LatheGeometry(points, 32)
+    const mesh = new THREE.Mesh(geo, material)
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    return mesh
+  }
 
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 0.3, 0.8, 32),
-    new THREE.MeshStandardMaterial({ color })
-  )
-  body.position.y = 0.5
-  body.castShadow = true
-  body.receiveShadow = true
-  group.add(body)
+  const basePoints = [
+    new THREE.Vector2(0, 0),
+    new THREE.Vector2(0.35, 0),
+    new THREE.Vector2(0.35, 0.05),
+    new THREE.Vector2(0.3, 0.1),
+    new THREE.Vector2(0.25, 0.15),
+    new THREE.Vector2(0, 0.15), // close base
+  ]
 
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.2, 32, 32),
-    new THREE.MeshStandardMaterial({ color })
-  )
-  head.position.y = 1.0
-  head.castShadow = true
-  head.receiveShadow = true
-  group.add(head)
+  if (type === 'pawn') {
+    const points = [
+      ...basePoints,
+      new THREE.Vector2(0.2, 0.2),
+      new THREE.Vector2(0.15, 0.4),
+      new THREE.Vector2(0.2, 0.5),
+      new THREE.Vector2(0.25, 0.6),
+      new THREE.Vector2(0, 0.8), // close top
+    ]
+    group.add(createLathePiece(points))
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), material)
+    head.position.y = 0.7
+    head.castShadow = true
+    group.add(head)
+  }
+  else if (type === 'rook') {
+    const points = [
+      ...basePoints,
+      new THREE.Vector2(0.25, 0.2),
+      new THREE.Vector2(0.25, 0.7),
+      new THREE.Vector2(0.3, 0.8),
+      new THREE.Vector2(0.3, 0.9),
+      new THREE.Vector2(0, 0.9), // close top
+    ]
+    group.add(createLathePiece(points))
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 32), material)
+    top.position.y = 0.95
+    top.castShadow = true
+    group.add(top)
+  }
+  else if (type === 'knight') {
+    const knightBasePoints = [
+      new THREE.Vector2(0, 0),
+      new THREE.Vector2(0.4, 0),
+      new THREE.Vector2(0.4, 0.08),
+      new THREE.Vector2(0.35, 0.12),
+      new THREE.Vector2(0.3, 0.18),
+      new THREE.Vector2(0.25, 0.22),
+      new THREE.Vector2(0, 0.22), // Close base top
+    ]
+    group.add(createLathePiece(knightBasePoints))
 
-  // align with board squares
+    // Knight head 
+    const shape = new THREE.Shape()
+    shape.moveTo(0, 0)
+    shape.lineTo(0.3, 0) // neck base front
+    shape.lineTo(0.3, 0.4) // lower neck
+    shape.quadraticCurveTo(0.35, 0.4, 0.5, 0.35) // nopse bottom
+    shape.lineTo(0.55, 0.4) // lip
+    shape.lineTo(0.55, 0.5) // tip of nose
+    shape.quadraticCurveTo(0.55, 0.6, 0.4, 0.6) // top of nose
+    shape.quadraticCurveTo(0.35, 0.65, 0.3, 0.8) // 4head to ear
+    shape.lineTo(0.25, 0.95) // ear tip front
+    shape.lineTo(0.15, 0.85) // ear valley
+    shape.lineTo(0.05, 0.95) // ear tip back
+    shape.lineTo(0, 0.75) // back of head
+    shape.quadraticCurveTo(-0.15, 0.6, -0.25, 0.4) // neck back curve
+    shape.lineTo(-0.25, 0) // neck base back
+    shape.lineTo(0, 0)
+
+    const extrudeSettings = { depth: 0.16, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04 }
+    const headGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+    // center the head thickness on the base
+    headGeo.translate(0, 0, -0.08)
+
+    const head = new THREE.Mesh(headGeo, material)
+    head.position.set(0, 0.2, 0) // start head above the base
+
+    head.rotation.y = isWhite ? -Math.PI / 2 : Math.PI / 2
+
+    head.castShadow = true
+    group.add(head)
+  }
+  else if (type === 'bishop') {
+    const points = [
+      ...basePoints,
+      new THREE.Vector2(0.2, 0.2),
+      new THREE.Vector2(0.15, 0.6),
+      new THREE.Vector2(0.2, 0.8),
+      new THREE.Vector2(0.1, 1.1),
+      new THREE.Vector2(0, 1.2),
+    ]
+    group.add(createLathePiece(points))
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), material)
+    tip.position.y = 1.2
+    group.add(tip)
+  }
+  else if (type === 'queen') {
+    const points = [
+      ...basePoints,
+      new THREE.Vector2(0.25, 0.2),
+      new THREE.Vector2(0.15, 0.8),
+      new THREE.Vector2(0.3, 1.2),
+      new THREE.Vector2(0.35, 1.3),
+      new THREE.Vector2(0, 1.4),
+    ]
+    group.add(createLathePiece(points))
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), material)
+    crown.position.y = 1.45
+    group.add(crown)
+  }
+  else if (type === 'king') {
+    const points = [
+      ...basePoints,
+      new THREE.Vector2(0.25, 0.2),
+      new THREE.Vector2(0.2, 0.9),
+      new THREE.Vector2(0.3, 1.3),
+      new THREE.Vector2(0.3, 1.4),
+      new THREE.Vector2(0, 1.5),
+    ]
+    group.add(createLathePiece(points))
+    // simple cross top
+    const crossBar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.05), material)
+    crossBar.position.y = 1.6
+    group.add(crossBar)
+    const crossVert = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.2, 0.05), material)
+    crossVert.position.y = 1.6
+    group.add(crossVert)
+  }
+
+  // position on board
   const x = (x_coord - boardSize / 2 + 0.5) * tileSize
   const z = (z_coord - boardSize / 2 + 0.5) * tileSize
   group.position.set(x, boardHeight, z)
   scene.add(group)
+  return group
 }
 
-createPawn(0xff4444, 0, 0) // corner
-createPawn(0x4444ff, 7, 7) // opposite corner
+//Initialize board with pieces
+// White pieces
+for (let i = 0; i < 8; i++) createPiece('pawn', true, i, 1)
+createPiece('rook', true, 0, 0)
+createPiece('knight', true, 1, 0)
+createPiece('bishop', true, 2, 0)
+createPiece('queen', true, 3, 0)
+createPiece('king', true, 4, 0)
+createPiece('bishop', true, 5, 0)
+createPiece('knight', true, 6, 0)
+createPiece('rook', true, 7, 0)
 
-const box = new THREE.Mesh(
-  new THREE.BoxGeometry(0.8, 0.8, 0.8),
-  new THREE.MeshStandardMaterial({ color: 0x888888 })
-)
-box.position.set(0.5, boardHeight + 0.4, 0.5) // sitting on a square
-box.castShadow = true
-box.receiveShadow = true
-scene.add(box)
+// Black pieces
+for (let i = 0; i < 8; i++) createPiece('pawn', false, i, 6)
+createPiece('rook', false, 0, 7)
+createPiece('knight', false, 1, 7)
+createPiece('bishop', false, 2, 7)
+createPiece('queen', false, 3, 7)
+createPiece('king', false, 4, 7)
+createPiece('bishop', false, 5, 7)
+createPiece('knight', false, 6, 7)
+createPiece('rook', false, 7, 7)
 
 // resize
 window.addEventListener('resize', () => {
