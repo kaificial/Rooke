@@ -79,12 +79,9 @@ const sidebar = document.createElement('div')
 sidebar.id = 'ui-sidebar'
 sidebar.innerHTML = `
   <h2>Match Details</h2>
-  <div style="margin-bottom: 15px;">
-    <button id="start-game-btn" style="width:100%; padding: 10px; background:#222; border:1px solid #444; color:#fff; font-family:'Inter'; text-transform:uppercase; font-size:11px; letter-spacing:2px; font-weight:600; cursor:pointer; transition:background 0.2s;">Start Game</button>
-  </div>
-  <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-family:'Inter'; font-size:12px; color:#888; border-bottom:1px solid #333; padding-bottom:15px;">
-     <div style="display:flex; align-items:center;">WHITE <span id="white-timer" style="color:#fff; font-weight:600; margin-left:8px; font-feature-settings:'tnum';">10:00</span></div>
-     <div style="display:flex; align-items:center;">BLACK <span id="black-timer" style="color:#fff; font-weight:600; margin-left:8px; font-feature-settings:'tnum';">10:00</span></div>
+  <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+    <button id="start-game-btn" style="flex: 1; padding: 10px; background:#222; border:1px solid #444; color:#fff; font-family:'Inter'; text-transform:uppercase; font-size:11px; letter-spacing:1px; font-weight:600; cursor:pointer; transition:background 0.2s;">Start</button>
+    <button id="exit-game-btn" style="flex: 1; padding: 10px; background:transparent; border:1px solid #444; color:#888; font-family:'Inter'; text-transform:uppercase; font-size:11px; letter-spacing:1px; font-weight:600; cursor:pointer; transition:all 0.2s;">Exit</button>
   </div>
   <div class="status" id="game-status">White's Turn</div>
   <div id="move-history">
@@ -104,6 +101,57 @@ sidebar.innerHTML = `
   </div>
 `
 document.body.appendChild(sidebar)
+
+// Top Timer Styles & HTML
+const timerStyle = document.createElement('style')
+timerStyle.textContent = `
+  #top-timer-display {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 900; pointer-events: none;
+  }
+  .timer-container {
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid #444;
+    border-radius: 50px;
+    padding: 10px 40px;
+    display: flex; align-items: center; gap: 30px;
+    backdrop-filter: blur(10px);
+  }
+  .timer-side { text-align: center; }
+  .timer-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px; color: #666; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px;
+  }
+  .timer-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; color: #555; font-variant-numeric: tabular-nums;
+  }
+  .timer-value.active { color: #ccb066; text-shadow: 0 0 10px rgba(204, 176, 102, 0.3); }
+  .timer-divider { font-family: 'Playfair Display', serif; font-size: 20px; color: #444; margin-top: 10px; }
+`
+document.head.appendChild(timerStyle)
+
+const timerDisplay = document.createElement('div')
+timerDisplay.id = 'top-timer-display'
+timerDisplay.innerHTML = `
+  <div class="timer-container">
+    <div class="timer-side">
+      <div class="timer-label">WHITE</div>
+      <div id="top-white-timer" class="timer-value">10:00</div>
+    </div>
+    <div class="timer-divider">:</div>
+    <div class="timer-side">
+      <div class="timer-label">BLACK</div>
+      <div id="top-black-timer" class="timer-value">10:00</div>
+    </div>
+  </div>
+`
+document.body.appendChild(timerDisplay)
+
+// Exit Handler
+document.getElementById('exit-game-btn')?.addEventListener('click', () => {
+  window.location.reload()
+})
 // Landing Page Implementation
 const landingStyle = document.createElement('style')
 landingStyle.textContent = `
@@ -280,6 +328,21 @@ function hidePromotionUI() {
   }
   pendingPromotion = null
 }
+
+// Start Game Listener
+document.getElementById('start-game-btn')?.addEventListener('click', () => {
+  if (gameActive) return
+  gameActive = true
+  if (timerInterval) clearInterval(timerInterval)
+  timerInterval = setInterval(updateTimers, 1000)
+
+  const btn = document.getElementById('start-game-btn')
+  if (btn) {
+    btn.innerText = "GAME IN PROGRESS"
+    btn.style.opacity = '0.5'
+    btn.style.cursor = 'default'
+  }
+})
 
 // handle promotion selection
 document.querySelectorAll('.promotion-btn').forEach(btn => {
@@ -662,6 +725,10 @@ allPieces.push({ group: createPiece('rook', false, 7, 7), type: 'rook', isWhite:
 // game state
 let currentTurn: 'white' | 'black' = 'white'
 let gameOver = false
+let gameActive = false
+let whiteTime = 600
+let blackTime = 600
+let timerInterval: any = null
 let lastMove: { piece: any, from: { x: number, z: number }, to: { x: number, z: number }, isCapture?: boolean } | null = null
 
 // selection state
@@ -925,6 +992,47 @@ let animatingPiece: {
 } | null = null
 
 
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function updateTimers() {
+  if (!gameActive) return
+
+  const wTimer = document.getElementById('top-white-timer')
+  const bTimer = document.getElementById('top-black-timer')
+
+  if (currentTurn === 'white') {
+    whiteTime--
+    if (wTimer) {
+      wTimer.innerText = formatTime(whiteTime)
+      wTimer.classList.add('active')
+      bTimer?.classList.remove('active')
+    }
+    if (whiteTime <= 0) {
+      console.log("White ran out of time!")
+      gameOver = true
+      gameActive = false
+      if (timerInterval) clearInterval(timerInterval)
+    }
+  } else {
+    blackTime--
+    if (bTimer) {
+      bTimer.innerText = formatTime(blackTime)
+      bTimer.classList.add('active')
+      wTimer?.classList.remove('active')
+    }
+    if (blackTime <= 0) {
+      console.log("Black ran out of time!")
+      gameOver = true
+      gameActive = false
+      if (timerInterval) clearInterval(timerInterval)
+    }
+  }
+}
+
 let moveNumber = 1
 
 function toChessNotation(move: any) {
@@ -1103,7 +1211,7 @@ function onMouseClick(event: MouseEvent) {
   const allMeshes = allPieces.flatMap(p => p.group.children)
   const intersects = raycaster.intersectObjects(allMeshes, false)
 
-  if (intersects.length > 0 && !gameOver) {
+  if (intersects.length > 0 && !gameOver && gameActive) {
     // find which piece was clicked
     const clickedMesh = intersects[0].object
     const clickedPiece = allPieces.find(p => p.group.children.includes(clickedMesh))
