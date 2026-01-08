@@ -37,6 +37,20 @@ style.textContent = `
     border-bottom: 1px solid #333;
     padding-bottom: 15px;
   }
+    padding-bottom: 15px;
+  }
+  #move-history {
+    margin-top: 15px;
+    font-size: 13px;
+    max-height: 150px;
+    overflow-y: auto;
+    border-top: 1px solid #333;
+    padding-top: 10px;
+  }
+  #move-history table { width: 100%; border-collapse: collapse; }
+  #move-history th { text-align: left; color: #666; font-size: 11px; padding: 2px 4px; }
+  #move-history td { padding: 2px 4px; color: #ddd; }
+  #move-history tr:nth-child(even) { background: rgba(255,255,255,0.03); }
   .promotion-options {
     display: flex;
     flex-direction: column;
