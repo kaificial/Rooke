@@ -102,7 +102,7 @@ sidebar.innerHTML = `
 `
 document.body.appendChild(sidebar)
 
-// Top Timer Styles & HTML
+// top timer 
 const timerStyle = document.createElement('style')
 timerStyle.textContent = `
   #top-timer-display {
@@ -112,7 +112,7 @@ timerStyle.textContent = `
   .timer-container {
     background: rgba(10, 10, 10, 0.8);
     border: 1px solid #444;
-    border-radius: 50px;
+    border-radius: 4px;
     padding: 10px 40px;
     display: flex; align-items: center; gap: 30px;
     backdrop-filter: blur(10px);
@@ -147,6 +147,26 @@ timerDisplay.innerHTML = `
   </div>
 `
 document.body.appendChild(timerDisplay)
+
+// Material Display
+const materialStyle = document.createElement('style')
+materialStyle.textContent = `
+  #white-material, #black-material {
+    position: fixed; top: 30px; z-index: 900;
+    font-size: 24px; letter-spacing: 2px;
+    display: flex; gap: 2px;
+    pointer-events: none;
+    font-family: "Segoe UI Symbol", "DejaVu Sans", sans-serif;
+  }
+  #white-material { left: 40px; color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.4); }
+  #black-material { right: 40px; color: #666; text-shadow: 0 0 2px rgba(0,0,0,0.5); }
+`
+document.head.appendChild(materialStyle)
+
+const whiteMat = document.createElement('div'); whiteMat.id = 'white-material';
+const blackMat = document.createElement('div'); blackMat.id = 'black-material';
+document.body.appendChild(whiteMat);
+document.body.appendChild(blackMat);
 
 // Exit Handler
 document.getElementById('exit-game-btn')?.addEventListener('click', () => {
@@ -329,7 +349,7 @@ function hidePromotionUI() {
   pendingPromotion = null
 }
 
-// Start Game Listener
+// Start Game 
 document.getElementById('start-game-btn')?.addEventListener('click', () => {
   if (gameActive) return
   gameActive = true
@@ -380,7 +400,8 @@ document.querySelectorAll('.promotion-btn').forEach(btn => {
 
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x000000)
+scene.background = new THREE.Color(0x080808)
+scene.fog = new THREE.Fog(0x080808, 20, 50)
 
 //camera
 const aspect = window.innerWidth / window.innerHeight
@@ -1080,11 +1101,32 @@ function updateMoveHistory(moveText: string, isWhite: boolean) {
   }
 }
 
+const pieceIcons: { [key: string]: string } = {
+  king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟'
+}
+
+function updateMaterialDisplay() {
+  const order = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn']
+
+  const wContainer = document.getElementById('white-material')
+  const bContainer = document.getElementById('black-material')
+
+  if (wContainer) {
+    const pieces = allPieces.filter(p => p.isWhite).sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type))
+    wContainer.innerHTML = pieces.map(p => pieceIcons[p.type]).join('')
+  }
+  if (bContainer) {
+    const pieces = allPieces.filter(p => !p.isWhite).sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type))
+    bContainer.innerHTML = pieces.map(p => pieceIcons[p.type]).join('')
+  }
+}
+
 function finalizeTurn(overrideTurn?: string) {
   if (lastMove) {
     const notation = toChessNotation(lastMove)
     updateMoveHistory(notation, lastMove.piece.isWhite)
   }
+  updateMaterialDisplay()
 
   console.log("finalizeTurn called. Old Turn:", currentTurn, "Override:", overrideTurn)
   // switch turns
@@ -1296,3 +1338,4 @@ function animate() {
 }
 
 animate()
+updateMaterialDisplay()
