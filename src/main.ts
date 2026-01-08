@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x1a1a1a)
+scene.background = new THREE.Color(0x000000)
 
 //camera
 const aspect = window.innerWidth / window.innerHeight
@@ -47,23 +47,45 @@ directionalLight.shadow.camera.bottom = -10
 scene.add(directionalLight)
 
 // set up board chess
-const planeSize = 20
-const gridHelper = new THREE.GridHelper(planeSize, 20, 0x444444, 0x222222)
-scene.add(gridHelper)
+const boardSize = 8
+const tileSize = 1
+const boardHeight = 0.1
 
-const groundGeometry = new THREE.PlaneGeometry(planeSize, planeSize)
-const groundMaterial = new THREE.MeshStandardMaterial({
-  color: 0x333333,
-  roughness: 0.8,
-  metalness: 0.2
-})
-const ground = new THREE.Mesh(groundGeometry, groundMaterial)
-ground.rotation.x = -Math.PI / 2
-ground.receiveShadow = true
-scene.add(ground)
+// board group
+const boardGroup = new THREE.Group()
+scene.add(boardGroup)
+
+// board base
+const baseGeometry = new THREE.BoxGeometry(boardSize * tileSize + 0.4, boardHeight, boardSize * tileSize + 0.4)
+const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x442200 }) // wooden dark brown
+const base = new THREE.Mesh(baseGeometry, baseMaterial)
+base.position.y = boardHeight / 2
+base.receiveShadow = true
+boardGroup.add(base)
+
+// squares
+const lightSquareMaterial = new THREE.MeshStandardMaterial({ color: 0xeeeeee })
+const darkSquareMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 })
+
+for (let i = 0; i < boardSize; i++) {
+  for (let j = 0; j < boardSize; j++) {
+    const squareGeometry = new THREE.PlaneGeometry(tileSize, tileSize)
+    const material = (i + j) % 2 === 0 ? lightSquareMaterial : darkSquareMaterial
+    const square = new THREE.Mesh(squareGeometry, material)
+
+    square.rotation.x = -Math.PI / 2
+    square.position.x = (i - boardSize / 2 + 0.5) * tileSize
+    square.position.z = (j - boardSize / 2 + 0.5) * tileSize
+    square.position.y = boardHeight + 0.001 // slightly above base
+    square.receiveShadow = true
+    boardGroup.add(square)
+  }
+}
+
+
 
 // set up pieces for reference
-function createPawn(color: number, x: number, z: number) {
+function createPawn(color: number, x_coord: number, z_coord: number) {
   const group = new THREE.Group()
 
   const base = new THREE.Mesh(
@@ -93,18 +115,21 @@ function createPawn(color: number, x: number, z: number) {
   head.receiveShadow = true
   group.add(head)
 
-  group.position.set(x, 0, z)
+  // align with board squares
+  const x = (x_coord - boardSize / 2 + 0.5) * tileSize
+  const z = (z_coord - boardSize / 2 + 0.5) * tileSize
+  group.position.set(x, boardHeight, z)
   scene.add(group)
 }
 
-createPawn(0xff4444, 1, 1)
-createPawn(0x4444ff, -1, -1)
+createPawn(0xff4444, 0, 0) // corner
+createPawn(0x4444ff, 7, 7) // opposite corner
 
 const box = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.BoxGeometry(0.8, 0.8, 0.8),
   new THREE.MeshStandardMaterial({ color: 0x888888 })
 )
-box.position.set(0, 0.5, 0)
+box.position.set(0.5, boardHeight + 0.4, 0.5) // sitting on a square
 box.castShadow = true
 box.receiveShadow = true
 scene.add(box)
