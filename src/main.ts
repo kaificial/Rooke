@@ -1,5 +1,8 @@
 import './style.css'
 import * as THREE from 'three'
+import gsap from 'gsap'
+
+
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 
@@ -90,7 +93,12 @@ sidebar.innerHTML = `
       <tbody id="move-list"></tbody>
     </table>
   </div>
+
+
+  </div>
+
   <div id="promotion-area" style="display:none">
+
     <div style="font-size: 12px; margin-bottom: 10px; color:#aaa;">Pawn Promotion</div>
     <div class="promotion-options">
       <div class="promotion-btn" data-type="queen">Queen</div>
@@ -98,6 +106,9 @@ sidebar.innerHTML = `
       <div class="promotion-btn" data-type="bishop">Bishop</div>
       <div class="promotion-btn" data-type="knight">Knight</div>
     </div>
+  </div>
+  <div style="margin-top: 15px; text-align: center;">
+
   </div>
 `
 document.body.appendChild(sidebar)
@@ -147,6 +158,11 @@ timerDisplay.innerHTML = `
   </div>
 `
 document.body.appendChild(timerDisplay)
+
+
+
+
+
 
 // Mat Discplay
 const materialStyle = document.createElement('style')
@@ -359,7 +375,7 @@ landing.innerHTML = `
          <p class="subtitle">A 3D chess app exploring graphics and game logic. Built with TypeScript, Vite, and Three.js.</p>
          <div class="actions">
              <button id="mode-sandbox" class="landing-btn">LAUNCH DEMO</button>
-             <button id="mode-ai-stub" class="landing-btn outline" style="border-color:#ccb066; color:#ccb066;">VS AI</button>
+             <button id="mode-ai" class="landing-btn outline" style="border-color:#ccb066; color:#ccb066;">VS AI</button>
          </div>
      </div>
      <div class="feature-grid">
@@ -405,6 +421,8 @@ if (landingVideo) {
 
 
 
+let isAIEnabled = false
+
 function startGameTransition() {
   landing.style.transition = 'opacity 0.8s ease'
   landing.style.opacity = '0'
@@ -414,12 +432,16 @@ function startGameTransition() {
   }, 800)
 }
 
+
 document.getElementById('mode-sandbox')?.addEventListener('click', () => {
+  isAIEnabled = false
   startGameTransition()
 })
 
-document.getElementById('mode-ai-stub')?.addEventListener('click', () => {
-  alert("AI Opponent Coming Soon!")
+document.getElementById('mode-ai')?.addEventListener('click', () => {
+  isAIEnabled = true
+  startGameTransition()
+  startGameTransition()
 })
 
 document.getElementById('nav-portfolio')?.addEventListener('click', () => {
@@ -1238,6 +1260,8 @@ function finalizeTurn(overrideTurn?: string) {
     const notation = toChessNotation(lastMove)
     updateMoveHistory(notation, lastMove.piece.isWhite)
   }
+
+
   updateMaterialDisplay()
 
   console.log("finalizeTurn called. Old Turn:", currentTurn, "Override:", overrideTurn)
@@ -1267,7 +1291,97 @@ function finalizeTurn(overrideTurn?: string) {
   if (statusEl) statusEl.innerText = statusText
 
 
+  // AI Trigger
+  if (isAIEnabled && currentTurn === 'black' && !gameOver) {
+    console.log("Requesting AI Move...")
+    const fen = generateFen()
+    aiWorker.postMessage({ fen, depth: 3 })
+
+  }
 }
+
+// AI Worker Integration
+const aiWorker = new Worker(new URL('./chess-ai.worker.ts', import.meta.url), { type: 'module' })
+
+aiWorker.onmessage = (e) => {
+  const data = e.data
+  if (data.type === 'bestMove') {
+    if (data.move) {
+      executeAIMove(data.move)
+    }
+  } else if (data.type === 'thinking') {
+  }
+}
+
+
+function executeAIMove(move: { from: number, to: number }) {
+  const fromR = Math.floor(move.from / 8)
+  const fromC = move.from % 8
+  const toR = Math.floor(move.to / 8)
+  const toC = move.to % 8
+
+  const fromZ = 7 - fromR
+  const fromX = fromC
+  const targetZ = 7 - toR
+  const targetX = toC
+
+  const piece = allPieces.find(p => p.x === fromX && p.z === fromZ)
+  if (!piece) return
+
+  // Capture logic
+  const captured = getPieceAt(targetX, targetZ)
+  let isCapture = false
+  if (captured && captured.isWhite !== piece.isWhite) {
+    if (captured.group) scene.remove(captured.group)
+    const idx = allPieces.indexOf(captured)
+    if (idx > -1) allPieces.splice(idx, 1)
+    isCapture = true
+  }
+
+  lastMove = { piece, from: { x: piece.x, z: piece.z }, to: { x: targetX, z: targetZ }, isCapture }
+
+  piece.x = targetX
+  piece.z = targetZ
+  piece.hasMoved = true
+
+  const targetPos = new THREE.Vector3((targetX - boardSize / 2 + 0.5) * tileSize, boardHeight, (targetZ - boardSize / 2 + 0.5) * tileSize)
+
+  gsap.to(piece.group.position, {
+    x: targetPos.x,
+    y: targetPos.y,
+    z: targetPos.z,
+    duration: 0.6,
+    ease: "power2.inOut",
+    onComplete: () => {
+      finalizeTurn()
+    }
+  })
+}
+
+function generateFen() {
+  let fen = ''
+  for (let r = 0; r < 8; r++) {
+    let empty = 0
+    const z = 7 - r
+    for (let c = 0; c < 8; c++) {
+      const x = c
+      const piece = allPieces.find(p => p.x === x && p.z === z)
+      if (piece) {
+        if (empty > 0) { fen += empty; empty = 0 }
+        const typeMap: any = { 'knight': 'n', 'rook': 'r', 'bishop': 'b', 'queen': 'q', 'king': 'k', 'pawn': 'p' }
+        const char = typeMap[piece.type] || 'p'
+        fen += piece.isWhite ? char.toUpperCase() : char
+      } else {
+        empty++
+      }
+    }
+    if (empty > 0) fen += empty
+    if (r < 7) fen += '/'
+  }
+  fen += ' ' + (currentTurn === 'white' ? 'w' : 'b') + ' - - 0 1'
+  return fen
+}
+
 
 function onMouseClick(event: MouseEvent) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1
@@ -1279,7 +1393,7 @@ function onMouseClick(event: MouseEvent) {
 
   raycaster.setFromCamera(mouse, camera)
 
-  // if a piece is selected, check if we clicked a legal move square
+  // if a piece is selected check if we clicked a legal move square
   if (selectedPiece) {
     // check if we clicked on a highlight (legal move)
     const highlightIntersects = raycaster.intersectObjects(highlightMeshes, false)
@@ -1291,7 +1405,6 @@ function onMouseClick(event: MouseEvent) {
       const targetX = clickedHighlight.position.x
       const targetZ = clickedHighlight.position.z
 
-      // convert world position back to board coordinates
       const boardX = Math.round((targetX / tileSize) + boardSize / 2 - 0.5)
       const boardZ = Math.round((targetZ / tileSize) + boardSize / 2 - 0.5)
 
@@ -1302,7 +1415,6 @@ function onMouseClick(event: MouseEvent) {
         const rookTargetX = isKingside ? 5 : 3
         const rook = allPieces.find(p => p.type === 'rook' && p.isWhite === selectedPiece.isWhite && p.x === rookX && p.z === boardZ)
         if (rook) {
-          // move rook immediately (or could animate, but let's keep it simple for now)
           const rx = (rookTargetX - boardSize / 2 + 0.5) * tileSize
           const rz = (boardZ - boardSize / 2 + 0.5) * tileSize
           rook.group.position.set(rx, boardHeight, rz)
@@ -1315,7 +1427,7 @@ function onMouseClick(event: MouseEvent) {
 
       // check for En Passant capture
       if (selectedPiece.type === 'pawn' && boardX !== selectedPiece.x && !getPieceAt(boardX, boardZ)) {
-        const captureZ = selectedPiece.z // The enemy pawn is on the same rank as the start position
+        const captureZ = selectedPiece.z
         const capturedPawn = getPieceAt(boardX, captureZ)
         if (capturedPawn && capturedPawn.type === 'pawn' && capturedPawn.isWhite !== selectedPiece.isWhite) {
           scene.remove(capturedPawn.group)
@@ -1328,31 +1440,44 @@ function onMouseClick(event: MouseEvent) {
       // check if there's a piece to capture (normal capture)
       const capturedPiece = getPieceAt(boardX, boardZ)
       if (capturedPiece) {
-        // remove captured piece from scene and array
         scene.remove(capturedPiece.group)
         const index = allPieces.indexOf(capturedPiece)
         if (index > -1) allPieces.splice(index, 1)
         isCapture = true
       }
 
-      // start animation
-      const startPos = selectedPiece.group.position.clone()
-      const endPos = new THREE.Vector3(targetX, boardHeight, targetZ)
+      // start animation (GSAP)
+      const targetPos = new THREE.Vector3(targetX, boardHeight, targetZ)
 
-      animatingPiece = {
-        group: selectedPiece.group,
-        startPos,
-        endPos,
-        progress: 0,
-        pieceData: selectedPiece
-      }
-
-      // update piece position data
+      // update pieces position data
       lastMove = { piece: selectedPiece, from: { x: selectedPiece.x, z: selectedPiece.z }, to: { x: boardX, z: boardZ }, isCapture }
       selectedPiece.x = boardX
       selectedPiece.z = boardZ
       selectedPiece.hasMoved = true
 
+      const pData = selectedPiece
+
+      gsap.to(selectedPiece.group.position, {
+        x: targetPos.x,
+        y: targetPos.y,
+        z: targetPos.z,
+        duration: 0.5,
+        ease: "power2.inOut",
+        onComplete: () => {
+          // Check for promotion
+          if (pData.type === 'pawn' && (pData.z === 0 || pData.z === 7)) {
+            showPromotionUI(pData)
+          } else {
+            finalizeTurn()
+          }
+        }
+      })
+
+      // clear selection and highlights
+      selectedPiece = null
+      clearHighlights()
+
+      return
 
       // clear selection and highlights
       selectedPiece = null
@@ -1368,12 +1493,11 @@ function onMouseClick(event: MouseEvent) {
   const intersects = raycaster.intersectObjects(allMeshes, false)
 
   if (intersects.length > 0 && !gameOver && gameActive) {
-    // find which piece was clicked
+    // find which piece we clicked
     const clickedMesh = intersects[0].object
     const clickedPiece = allPieces.find(p => p.group.children.includes(clickedMesh))
 
     if (clickedPiece) {
-      // only allow selecting pieces of current turn
       const isWhiteTurn = currentTurn === 'white'
       if (clickedPiece.isWhite !== isWhiteTurn) {
         console.log(`It's ${currentTurn}'s turn!`)
@@ -1392,6 +1516,8 @@ function onMouseClick(event: MouseEvent) {
       // show possible moves
       const moves = getPossibleMoves(selectedPiece)
       highlightMoves(moves)
+
+
     }
   } else {
     // clicked empty space
@@ -1415,41 +1541,13 @@ window.addEventListener('resize', () => {
 // animation
 function animate() {
   requestAnimationFrame(animate)
-
-  // piece animation
-  if (animatingPiece) {
-    animatingPiece.progress += 0.08 // animation speed
-
-    if (animatingPiece.progress >= 1) {
-      // animation 
-      animatingPiece.group.position.copy(animatingPiece.endPos)
-
-      // Check for promotion
-      const p = animatingPiece.pieceData
-      if (p.type === 'pawn' && (p.z === 0 || p.z === 7)) {
-        showPromotionUI(p)
-      } else {
-        finalizeTurn()
-      }
-
-      animatingPiece = null
-    } else {
-      // smooth easing 
-      const t = animatingPiece.progress
-      const eased = 1 - Math.pow(1 - t, 3)
-
-      // interpolate position
-      animatingPiece.group.position.lerpVectors(
-        animatingPiece.startPos,
-        animatingPiece.endPos,
-        eased
-      )
-    }
-  }
-
   controls.update()
   renderer.render(scene, camera)
 }
 
 animate()
 updateMaterialDisplay()
+
+
+
+
