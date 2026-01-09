@@ -102,7 +102,7 @@ sidebar.innerHTML = `
 `
 document.body.appendChild(sidebar)
 
-// top timer 
+// Top Timer & HTML
 const timerStyle = document.createElement('style')
 timerStyle.textContent = `
   #top-timer-display {
@@ -148,7 +148,7 @@ timerDisplay.innerHTML = `
 `
 document.body.appendChild(timerDisplay)
 
-// Material Display
+// Mat Discplay
 const materialStyle = document.createElement('style')
 materialStyle.textContent = `
   #white-material, #black-material {
@@ -173,118 +173,169 @@ document.getElementById('exit-game-btn')?.addEventListener('click', () => {
   window.location.reload()
 })
 // Landing Page Implementation
+// Landing Page Implementation
 const landingStyle = document.createElement('style')
 landingStyle.textContent = `
   #landing-page {
     position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-    background: #f8f8f8;
-    color: #111;
     z-index: 2000;
     display: flex;
     font-family: 'Inter', sans-serif;
   }
   
   #landing-page .sidebar-left {
-    width: 60px;
-    background: #111;
+    width: 80px;
+    background: #000;
     height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-right: 1px solid #222;
+  }
+  .logo-box {
+    font-size: 32px; color: #ccb066;
   }
   #landing-page .brand-vertical {
     writing-mode: vertical-rl;
     text-orientation: mixed;
     color: #ccb066;
-    font-weight: 600;
-    letter-spacing: 4px;
+    font-weight: 800;
+    letter-spacing: 6px;
     font-size: 14px;
     transform: rotate(180deg);
+    margin-bottom: 60px;
   }
 
   #landing-page .main-content {
     flex: 1;
-    padding: 60px 100px;
+    padding: 0 120px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background: #fff;
+    background: radial-gradient(circle at 0% 50%, #151515 0%, #080808 100%);
     position: relative;
   }
   
   #landing-page nav {
-    position: absolute; top: 40px; left: 100px;
-    display: flex; gap: 30px;
-    font-size: 12px; font-weight: 600; color: #888; letter-spacing: 1px;
+    position: absolute; top: 0; left: 0; width: 100%;
+    height: 80px;
+    background: #000;
+    border-bottom: 1px solid #222;
+    display: flex; align-items: center;
+    padding-left: 60px;
+    gap: 40px;
+    font-size: 13px; font-weight: 700; color: #555; letter-spacing: 2px;
   }
+  #landing-page nav span:hover { color: #fff; cursor: pointer; transition: color 0.3s; }
+
+  #landing-page .hero { margin-top: 120px; }
   
   #landing-page .version-tag {
-    font-size: 11px;
-    letter-spacing: 2px;
+    font-size: 12px;
+    letter-spacing: 3px;
     color: #ccb066;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     text-transform: uppercase;
-    display: flex; align-items: center; gap: 10px;
-    font-weight: 600;
+    display: flex; align-items: center; gap: 15px;
+    font-weight: 700;
   }
   #landing-page .version-tag::before {
-    content: ''; width: 20px; height: 1px; background: #ccb066; display: block;
+    content: ''; width: 40px; height: 2px; background: #ccb066; display: block;
   }
 
   #landing-page h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 80px;
-    line-height: 1.1;
-    font-weight: 400;
-    margin: 0 0 30px 0;
-    color: #111;
+    font-size: 96px;
+    line-height: 1.05;
+    font-weight: 500;
+    margin: 0 0 40px 0;
+    color: #fff;
+    letter-spacing: -2px;
   }
   
   #landing-page h1 .accent {
     font-style: italic;
     color: #ccb066;
+    background: linear-gradient(45deg, #ccb066, #ffdf85);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   #landing-page .subtitle {
-    font-size: 16px;
-    color: #666;
-    max-width: 500px;
-    line-height: 1.6;
-    margin-bottom: 50px;
-    padding-left: 20px;
-    border-left: 2px solid #eee;
+    font-size: 18px;
+    color: #888;
+    max-width: 600px;
+    line-height: 1.8;
+    margin-bottom: 60px;
+    padding-left: 30px;
+    border-left: 3px solid #ccb066;
   }
 
-  #landing-page .actions { display: flex; gap: 20px; }
+  #landing-page .actions { display: flex; gap: 30px; align-items: center; }
   
   button.landing-btn {
-    background: #111;
-    color: #fff;
+    background: #ccb066;
+    color: #000;
     border: none;
-    padding: 15px 40px;
-    font-size: 12px;
+    padding: 20px 50px;
+    font-size: 14px;
     letter-spacing: 2px;
-    font-weight: 600;
+    font-weight: 800;
     cursor: pointer;
     text-transform: uppercase;
     transition: all 0.3s;
+    box-shadow: 0 10px 30px rgba(204, 176, 102, 0.2);
   }
   button.landing-btn.outline {
     background: transparent;
-    color: #111;
-    border: 1px solid #ddd;
+    color: #fff;
+    border: 1px solid #444;
+    box-shadow: none;
   }
   button.landing-btn:hover {
-    background: #333;
-    color: #fff;
-    transform: translateY(-2px);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(204, 176, 102, 0.3);
+  }
+  button.landing-btn.outline:hover {
+    border-color: #fff;
+    box-shadow: 0 5px 20px rgba(255,255,255,0.1);
   }
 
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 80px;
+    border-top: 1px solid #222;
+    padding-top: 40px;
+    max-width: 800px;
+  }
+  .feature-item h3 { font-size: 14px; color: #fff; margin: 0 0 10px 0; font-weight: 700; letter-spacing: 1px; }
+  .feature-item p { font-size: 12px; color: #666; line-height: 1.6; margin: 0; }
+
   #landing-page .right-panel {
-    width: 35%;
-    background: #151515;
-    background-image: linear-gradient(45deg, #111 25%, #1a1a1a 25%, #1a1a1a 50%, #111 50%, #111 75%, #1a1a1a 75%, #1a1a1a 100%);
-    background-size: 40px 40px;
+    width: 40%;
+    background: #000;
+    position: relative;
+    overflow: hidden;
+    border-left: 1px solid #222;
+  }
+  .visual-element {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(204,176,102,0.1) 0%, rgba(0,0,0,0) 70%);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+  }
+  .grid-overlay {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.5;
   }
 `
 document.head.appendChild(landingStyle)
@@ -293,35 +344,70 @@ const landing = document.createElement('div')
 landing.id = 'landing-page'
 landing.innerHTML = `
   <div class="sidebar-left">
+     <div class="logo-box">♔</div>
      <div class="brand-vertical">ROOKE ENGINE</div>
   </div>
   <div class="main-content">
      <nav>
         <span>LIBRARY</span>
         <span>PUZZLES</span>
-        <span>LEARN</span>
+        <span>ANALYSIS</span>
      </nav>
      <div class="hero">
-         <div class="version-tag">BETA VERSION 1.0</div>
-         <h1>Master the Game <br> of <span class="accent">Kings</span></h1>
-         <p class="subtitle">Experience the next generation of 3D chess simulation. Beautiful, responsive, and completely in your browser.</p>
+         <div class="version-tag">ENGINE V1.0</div>
+         <h1>The Ultimate <br> <span class="accent">Chess Mind</span></h1>
+         <p class="subtitle">Challenge an advanced AI in a stunning, immersive 3D environment. Analyze your games, track your progress, and master the art of strategy.</p>
          <div class="actions">
-             <button id="enter-btn" class="landing-btn">ENTER SANDBOX</button>
-             <button id="demo-btn" class="landing-btn outline">VIEW DEMO</button>
+             <button id="mode-sandbox" class="landing-btn">SANDBOX</button>
+             <button id="mode-ai" class="landing-btn outline" style="border-color:#ccb066; color:#ccb066;">PLAY VS AI</button>
          </div>
      </div>
+     <div class="feature-grid">
+        <div class="feature-item">
+            <h3>REAL-TIME ENGINE</h3>
+            <p>Powered by advanced evaluation algorithms running directly in your browser.</p>
+        </div>
+        <div class="feature-item">
+            <h3>3D IMMERSION</h3>
+            <p>Physically based rendering with dynamic lighting and materials.</p>
+        </div>
+        <div class="feature-item">
+            <h3>GAME ANALYSIS</h3>
+            <p>Instant feedback on your moves with precision metrics.</p>
+        </div>
+     </div>
   </div>
-  <div class="right-panel"></div>
+  <div class="right-panel">
+      <div class="grid-overlay" style="z-index: 2;"></div>
+      <video src="/Screen%20Recording%202026-01-08%20182219.mp4#t=0,15" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8; filter: grayscale(40%) contrast(1.2);"></video>
+  </div>
 `
 document.body.appendChild(landing)
 
-document.getElementById('enter-btn')?.addEventListener('click', () => {
+const landingVideo = landing.querySelector('video')
+if (landingVideo) {
+  landingVideo.addEventListener('timeupdate', () => {
+    if (landingVideo.currentTime >= 15) landingVideo.currentTime = 0
+  })
+}
+
+
+
+function startGameTransition() {
   landing.style.transition = 'opacity 0.8s ease'
   landing.style.opacity = '0'
   setTimeout(() => {
     landing.remove()
     sidebar.style.display = 'block'
   }, 800)
+}
+
+document.getElementById('mode-sandbox')?.addEventListener('click', () => {
+  startGameTransition()
+})
+
+document.getElementById('mode-ai')?.addEventListener('click', () => {
+  alert("AI Opponent Coming Soon!")
 })
 
 // show/hide promotion UI
@@ -349,7 +435,7 @@ function hidePromotionUI() {
   pendingPromotion = null
 }
 
-// Start Game 
+// Start Game Listener
 document.getElementById('start-game-btn')?.addEventListener('click', () => {
   if (gameActive) return
   gameActive = true
@@ -1121,6 +1207,8 @@ function updateMaterialDisplay() {
   }
 }
 
+
+
 function finalizeTurn(overrideTurn?: string) {
   if (lastMove) {
     const notation = toChessNotation(lastMove)
@@ -1153,6 +1241,8 @@ function finalizeTurn(overrideTurn?: string) {
 
   const statusEl = document.getElementById('game-status')
   if (statusEl) statusEl.innerText = statusText
+
+
 }
 
 function onMouseClick(event: MouseEvent) {
