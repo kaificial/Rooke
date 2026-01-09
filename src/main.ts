@@ -349,46 +349,58 @@ landing.innerHTML = `
   </div>
   <div class="main-content">
      <nav>
-        <span>LIBRARY</span>
-        <span>PUZZLES</span>
-        <span>ANALYSIS</span>
+        <span id="nav-github">GITHUB</span>
+        <span id="nav-portfolio">VIEW MORE</span>
+        <span id="nav-about">ABOUT</span>
      </nav>
      <div class="hero">
-         <div class="version-tag">ENGINE V1.0</div>
-         <h1>The Ultimate <br> <span class="accent">Chess Mind</span></h1>
-         <p class="subtitle">Challenge an advanced AI in a stunning, immersive 3D environment. Analyze your games, track your progress, and master the art of strategy.</p>
+         <div class="version-tag">KAI KIM 2026</div>
+         <h1>Rooke <br> <span class="accent">Engine</span></h1>
+         <p class="subtitle">A 3D chess app exploring graphics and game logic. Built with TypeScript, Vite, and Three.js.</p>
          <div class="actions">
-             <button id="mode-sandbox" class="landing-btn">SANDBOX</button>
-             <button id="mode-ai" class="landing-btn outline" style="border-color:#ccb066; color:#ccb066;">PLAY VS AI</button>
+             <button id="mode-sandbox" class="landing-btn">LAUNCH DEMO</button>
+             <button id="mode-ai-stub" class="landing-btn outline" style="border-color:#ccb066; color:#ccb066;">VS AI</button>
          </div>
      </div>
      <div class="feature-grid">
         <div class="feature-item">
-            <h3>REAL-TIME ENGINE</h3>
-            <p>Powered by advanced evaluation algorithms running directly in your browser.</p>
+            <h3>TYPESCRIPT</h3>
+            <p>Made in TypeScript to keep the game logic clean, strict, and bug free.</p>
         </div>
         <div class="feature-item">
-            <h3>3D IMMERSION</h3>
-            <p>Physically based rendering with dynamic lighting and materials.</p>
+            <h3>THREE.JS</h3>
+            <p>A custom 3D scene built with Three.js which adds depth and atmosphere to every match.</p>
         </div>
         <div class="feature-item">
-            <h3>GAME ANALYSIS</h3>
-            <p>Instant feedback on your moves with precision metrics.</p>
+            <h3>WEB ARCHITECTURE</h3>
+            <p>Powered by Vite for a super fast, responsive experience that needs no downloads.</p>
         </div>
      </div>
   </div>
   <div class="right-panel">
       <div class="grid-overlay" style="z-index: 2;"></div>
-      <video src="/Screen%20Recording%202026-01-08%20182219.mp4#t=0,15" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8; filter: grayscale(40%) contrast(1.2);"></video>
+      <div class="tech-overlay" style="z-index: 3; position: absolute; inset: 0; pointer-events: none;">
+          <div style="position: absolute; top: 40px; right: 40px; text-align: right;">
+              <div style="color: #ccb066; font-size: 10px; letter-spacing: 2px; margin-bottom: 5px;">WE ARE:</div>
+              <div style="color: #fff; font-weight: 700; font-size: 14px; letter-spacing: 1px;">ONLINE</div>
+          </div>
+          <div style="position: absolute; bottom: 40px; left: 40px;">
+              <div style="color: #444; font-size: 10px; font-family: monospace;">ERR_00: NO_ERROR</div>
+              <div style="color: #444; font-size: 10px; font-family: monospace;">MEM: 128MB ALLOC</div>
+              <div style="color: #ccb066; font-size: 10px; font-family: monospace; margin-top: 5px;">:: READY ::</div>
+          </div>
+          <div style="position: absolute; top: 30px; left: 30px; width: 30px; height: 30px; border-top: 2px solid rgba(204, 176, 102, 0.5); border-left: 2px solid rgba(204, 176, 102, 0.5);"></div>
+          <div style="position: absolute; bottom: 30px; right: 30px; width: 30px; height: 30px; border-bottom: 2px solid rgba(204, 176, 102, 0.5); border-right: 2px solid rgba(204, 176, 102, 0.5);"></div>
+      </div>
+      <video src="/Screen%20Recording%202026-01-08%20182219.mp4#t=0.1" muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8; filter: grayscale(40%) contrast(1.2);"></video>
   </div>
 `
 document.body.appendChild(landing)
 
 const landingVideo = landing.querySelector('video')
 if (landingVideo) {
-  landingVideo.addEventListener('timeupdate', () => {
-    if (landingVideo.currentTime >= 15) landingVideo.currentTime = 0
-  })
+  // \\\
+  landingVideo.currentTime = 0
 }
 
 
@@ -406,8 +418,20 @@ document.getElementById('mode-sandbox')?.addEventListener('click', () => {
   startGameTransition()
 })
 
-document.getElementById('mode-ai')?.addEventListener('click', () => {
+document.getElementById('mode-ai-stub')?.addEventListener('click', () => {
   alert("AI Opponent Coming Soon!")
+})
+
+document.getElementById('nav-portfolio')?.addEventListener('click', () => {
+  window.open('https://kaificial.vercel.app', '_blank')
+})
+
+document.getElementById('nav-github')?.addEventListener('click', () => {
+  alert("Github Link Placeholder")
+})
+
+document.getElementById('nav-about')?.addEventListener('click', () => {
+  window.open('https://kaificial.vercel.app', '_blank')
 })
 
 // show/hide promotion UI
