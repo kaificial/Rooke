@@ -177,24 +177,20 @@ function generateMoves(b: any[], color: 'w' | 'b') {
 // Minimax with Tree 
 let nodeCount = 0;
 
-function minimax(depth: number, alpha: number, beta: number, isMaximizing: boolean, parentId: number = -1): number {
-    const currentNodeId = nodeCount++;
-    if (depth >= 1) {
-        postMessage({ type: 'treeNode', id: currentNodeId, parentId, depth });
-    }
-
+function minimax(depth: number, alpha: number, beta: number, isMaximizing: boolean): { score: number, line: any[] } {
+    nodeCount++;
     if (depth === 0) {
-        const score = evaluate(board);
-        if (depth >= 1) postMessage({ type: 'treeNodeUpdate', id: currentNodeId, score });
-        return score;
+        return { score: evaluate(board), line: [] };
     }
 
     const color = isMaximizing ? 'w' : 'b';
     const moves = generateMoves(board, color);
 
     if (moves.length === 0) {
-        return isMaximizing ? -Infinity : Infinity;
+        return { score: isMaximizing ? -Infinity : Infinity, line: [] };
     }
+
+    let bestLine: any[] = [];
 
     if (isMaximizing) {
         let maxEval = -Infinity;
@@ -203,17 +199,19 @@ function minimax(depth: number, alpha: number, beta: number, isMaximizing: boole
             board[move.to] = board[move.from];
             board[move.from] = null;
 
-            const evalScore = minimax(depth - 1, alpha, beta, false, currentNodeId);
+            const result = minimax(depth - 1, alpha, beta, false);
 
             board[move.from] = board[move.to];
             board[move.to] = saved;
 
-            maxEval = Math.max(maxEval, evalScore);
-            alpha = Math.max(alpha, evalScore);
+            if (result.score > maxEval) {
+                maxEval = result.score;
+                bestLine = [move, ...result.line];
+            }
+            alpha = Math.max(alpha, result.score);
             if (beta <= alpha) break;
         }
-        if (depth >= 1) postMessage({ type: 'treeNodeUpdate', id: currentNodeId, score: maxEval });
-        return maxEval;
+        return { score: maxEval, line: bestLine };
     } else {
         let minEval = Infinity;
         for (let move of moves) {
@@ -221,17 +219,19 @@ function minimax(depth: number, alpha: number, beta: number, isMaximizing: boole
             board[move.to] = board[move.from];
             board[move.from] = null;
 
-            const evalScore = minimax(depth - 1, alpha, beta, true, currentNodeId);
+            const result = minimax(depth - 1, alpha, beta, true);
 
             board[move.from] = board[move.to];
             board[move.to] = saved;
 
-            minEval = Math.min(minEval, evalScore);
-            beta = Math.min(beta, evalScore);
+            if (result.score < minEval) {
+                minEval = result.score;
+                bestLine = [move, ...result.line];
+            }
+            beta = Math.min(beta, result.score);
             if (beta <= alpha) break;
         }
-        if (depth >= 1) postMessage({ type: 'treeNodeUpdate', id: currentNodeId, score: minEval });
-        return minEval;
+        return { score: minEval, line: bestLine };
     }
 }
 
@@ -241,9 +241,9 @@ function searchBestMove(depth: number) {
 
     let bestMove = null;
     let bestScore = (turn === 'w') ? -Infinity : Infinity;
+    let bestLine: any[] = [];
 
     const moves = generateMoves(board, turn);
-    const rootId = -1;
 
     for (let i = 0; i < moves.length; i++) {
         const move = moves[i];
@@ -252,16 +252,20 @@ function searchBestMove(depth: number) {
         board[move.to] = board[move.from];
         board[move.from] = null;
 
-        let score = minimax(depth - 1, -Infinity, Infinity, turn !== 'w', rootId);
+        const result = minimax(depth - 1, -Infinity, Infinity, turn !== 'w');
 
         board[move.from] = board[move.to];
         board[move.to] = saved;
+
+        const score = result.score;
+        const currentLine = [move, ...result.line];
 
         postMessage({
             type: 'thinking',
             move: move,
             score: score,
             depth: depth,
+            pv: currentLine, // Send PV for this candidate
             nodes: nodeCount,
             time: Date.now() - start
         });
@@ -270,16 +274,18 @@ function searchBestMove(depth: number) {
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = move;
+                bestLine = currentLine;
             }
         } else {
             if (score < bestScore) {
                 bestScore = score;
                 bestMove = move;
+                bestLine = currentLine;
             }
         }
     }
 
-    return { bestMove, bestScore };
+    return { bestMove, bestScore, bestLine };
 }
 
 self.onmessage = (e) => {
@@ -289,6 +295,7 @@ self.onmessage = (e) => {
     postMessage({
         type: 'bestMove',
         move: result.bestMove,
-        score: result.bestScore
+        score: result.bestScore,
+        pv: result.bestLine // Send full PV
     });
 };
