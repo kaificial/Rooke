@@ -93,6 +93,9 @@ sidebar.innerHTML = `
       <tbody id="move-list"></tbody>
     </table>
   </div>
+  <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+     <button id="toggle-viz-btn" style="width: 100%; padding: 8px; background: transparent; border: 1px solid #ccb066; color: #ccb066; font-family: 'Inter'; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;">Hide AI Thoughts</button>
+  </div>
 
 
   </div>
@@ -158,6 +161,64 @@ timerDisplay.innerHTML = `
   </div>
 `
 document.body.appendChild(timerDisplay)
+
+
+// AI narrating log UI
+const logStyle = document.createElement('style')
+logStyle.textContent = `
+  #ai-log {
+     position: fixed; right: 20px; top: 100px; width: 300px; max-height: 400px;
+     background: rgba(15, 15, 20, 0.95); border: 1px solid #444; border-left: 3px solid #ccb066;
+     font-family: 'Inter', sans-serif; font-size: 11px; color: #aaa;
+     padding: 20px; overflow-y: auto; pointer-events: auto;
+     display: none; z-index: 1000;
+     border-radius: 0 4px 4px 0;
+     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .log-header { font-size: 10px; color: #ccb066; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; font-weight: 700; border-bottom: 1px solid #333; padding-bottom: 5px; }
+  .log-entry { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #222; line-height: 1.5; }
+  .log-entry:last-child { border-bottom: none; }
+  .log-action { color: #fff; font-weight: 600; }
+  .log-good { color: #6fc; }
+  .log-bad { color: #f66; }
+  .log-info { color: #aaa; }
+`
+document.head.appendChild(logStyle)
+
+const aiLog = document.createElement('div')
+aiLog.id = 'ai-log'
+aiLog.innerHTML = `
+  <div class="log-header">
+     AI Thought Process
+     <div style="font-size:8px; color:#666; font-weight:400; text-transform:none; margin-top:2px;">
+       (+ White Adv | - Black Adv)
+     </div>
+  </div>
+`
+document.body.appendChild(aiLog)
+
+function addAiLog(msg: string, type = 'info') {
+  const el = document.getElementById('ai-log')
+  if (!el) return
+  el.style.display = 'block'
+
+  const entry = document.createElement('div')
+  entry.className = 'log-entry'
+
+  let colorClass = 'log-info'
+  if (type === 'good') colorClass = 'log-good'
+  if (type === 'bad') colorClass = 'log-bad'
+  if (type === 'action') colorClass = 'log-action'
+
+  entry.innerHTML = `<span class="${colorClass}">${msg}</span>`
+  el.appendChild(entry)
+  el.scrollTop = el.scrollHeight
+
+  // Keep log length manageable but allow scrolling
+  if (el.children.length > 100) {
+    el.removeChild(el.children[1]) // Keep header
+  }
+}
 
 
 
@@ -1303,13 +1364,287 @@ function finalizeTurn(overrideTurn?: string) {
 // AI Worker Integration
 const aiWorker = new Worker(new URL('./chess-ai.worker.ts', import.meta.url), { type: 'module' })
 
+// playback
+const aiVisualQueue: any[] = []
+
 aiWorker.onmessage = (e) => {
   const data = e.data
-  if (data.type === 'bestMove') {
-    if (data.move) {
-      executeAIMove(data.move)
+  // Push to queue instead of moving right away 
+  aiVisualQueue.push(data)
+}
+
+// playback loop (800ms every thought)
+setInterval(() => {
+  if (aiVisualQueue.length > 0) {
+    // if queue is huge (>20) skip first thinking steps
+    if (aiVisualQueue.length > 20) {
+      // keep last 5
+      const lastFew = aiVisualQueue.slice(aiVisualQueue.length - 5)
+      aiVisualQueue.length = 0
+      aiVisualQueue.push(...lastFew)
     }
-  } else if (data.type === 'thinking') {
+
+    const data = aiVisualQueue.shift()
+    processAiEvent(data)
+  }
+}, 800)
+
+// visualization toggle on/off button
+let visualsEnabled = true
+document.getElementById('toggle-viz-btn')?.addEventListener('click', (e) => {
+  visualsEnabled = !visualsEnabled
+  const btn = e.target as HTMLButtonElement
+  btn.innerText = visualsEnabled ? "Hide AI Thoughts" : "Show AI Thoughts"
+  btn.style.color = visualsEnabled ? "#888" : "#ccb066"
+
+  // immediate toggle
+  ghostGroup.visible = visualsEnabled
+  arrowGroup.visible = visualsEnabled
+  auraGroup.visible = visualsEnabled
+
+  const logEl = document.getElementById('ai-log')
+  if (logEl) logEl.style.display = visualsEnabled ? 'block' : 'none'
+})
+
+function processAiEvent(data: any) {
+  if (!visualsEnabled) {
+    // even if disabled execute the move if it's bestMove
+    if (data.type === 'bestMove' && data.move) {
+      setTimeout(() => executeAIMove(data.move), 2000)
+    }
+    return
+  }
+
+  if (data.pv) updateGhosts(data.pv)
+  if (data.score !== undefined) updateAura(data.score)
+
+  if (data.type === 'thinking') {
+    updateArrows(data.move)
+    updateNarrative(data)
+  } else if (data.type === 'bestMove') {
+    if (data.move) {
+      // show final decision 
+      updateArrows(data.move, true)
+      updateNarrative(data, true)
+
+      // wait for users to understand 
+      setTimeout(() => {
+        executeAIMove(data.move)
+      }, 2000)
+    }
+  }
+}
+
+// 3D arrows 
+const arrowGroup = new THREE.Group()
+scene.add(arrowGroup)
+
+function updateArrows(move: any, persist = false) {
+  if (!persist) {
+    // clear out the old arrows
+    while (arrowGroup.children.length > 0) arrowGroup.remove(arrowGroup.children[0])
+  }
+
+  if (!move) return
+
+  const fromR = Math.floor(move.from / 8)
+  const fromC = move.from % 8
+  const toR = Math.floor(move.to / 8)
+  const toC = move.to % 8
+
+  const fromX = (fromC - 3.5) * tileSize
+  const fromZ = (7 - fromR - 3.5) * tileSize
+  const toX = (toC - 3.5) * tileSize
+  const toZ = (7 - toR - 3.5) * tileSize
+
+  const start = new THREE.Vector3(fromX, boardHeight + 0.1, fromZ)
+  const end = new THREE.Vector3(toX, boardHeight + 0.1, toZ)
+  const dir = new THREE.Vector3().subVectors(end, start)
+  const len = dir.length()
+
+  // create new arrow
+  const color = persist ? 0xccb066 : 0x00ffff // gold for final, blue for thinking arrow
+  const opacity = persist ? 0.8 : 0.4
+
+  // point
+  const shaftGeo = new THREE.CylinderGeometry(0.04, 0.04, len - 0.25, 8)
+  const headGeo = new THREE.ConeGeometry(0.12, 0.25, 8)
+  const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity })
+
+  const arrowObj = new THREE.Group()
+  const shaft = new THREE.Mesh(shaftGeo, mat)
+  shaft.rotation.x = Math.PI / 2
+  shaft.position.z = - (len - 0.25) / 2
+
+  const head = new THREE.Mesh(headGeo, mat)
+  head.rotation.x = Math.PI / 2
+  head.position.z = - len + 0.125
+
+  arrowObj.add(shaft, head)
+  arrowObj.position.copy(start)
+  arrowObj.lookAt(end)
+
+  arrowGroup.add(arrowObj)
+}
+
+function updateNarrative(data: any, isFinal = false) {
+  const m = data.move
+  const s = data.score
+
+  const fromR = Math.floor(m.from / 8)
+  const fromC = m.from % 8
+  const piece = allPieces.find(p => p.x === fromC && p.z === (7 - fromR))
+  const pType = piece ? piece.type : 'Piece'
+  const pName = pType.charAt(0).toUpperCase() + pType.slice(1)
+
+  let action = isFinal ? "Decided to move" : "Thinking about moving"
+  let reason = "to improve position"
+
+  const cols = "abcdefgh"
+  const row = 8 - Math.floor(m.to / 8)
+  const colStr = cols[m.to % 8]
+  const dest = colStr + row
+
+  // heuristics
+  // capture
+  const target = getPieceAt(m.to % 8, 7 - Math.floor(m.to / 8))
+  if (target) {
+    reason = `to capture Black's ${target.type} (Material Gain)`
+    if (target.isWhite) reason = `to capture White's ${target.type}!`
+  }
+
+  // center cntrol (d4, e4, d5, e5)
+  // indices: 27, 28, 35, 36
+  const centerIndices = [27, 28, 35, 36]
+  if (centerIndices.includes(m.to)) reason = "to control the center"
+
+  // check
+  // (needs check logic simple check here: score spike?)
+
+  // score context
+  let sentiment = 'info'
+  if (s > 100) { action = "Winning move:"; sentiment = 'good' }
+  else if (s < -100) { action = "Defensive move:"; sentiment = 'bad' } // Black AI winning is negative?
+  // + is White adv, - is Black adv.
+  // if AI is black -100 is good for ai.
+  if (currentTurn === 'black') {
+    if (s < -50) { action = "Aggressive Move:"; sentiment = 'good' }
+    if (s > 50) { action = "Defending:"; sentiment = 'bad' }
+  }
+
+  const scoreText = (s / 100).toFixed(2)
+  const msg = `${action} ${pName} to ${dest} ${reason} (${scoreText})`
+  addAiLog(msg, sentiment)
+}
+
+// holo PV visuals
+const ghostGroup = new THREE.Group()
+scene.add(ghostGroup)
+
+const ghostMaterial = new THREE.MeshBasicMaterial({
+  color: 0x00ffff,
+  transparent: true,
+  opacity: 0.5,
+  wireframe: true,
+  blending: THREE.AdditiveBlending
+})
+
+function updateGhosts(pv: any[]) {
+  // Ccear old holos
+  while (ghostGroup.children.length > 0) {
+    ghostGroup.remove(ghostGroup.children[0])
+  }
+
+  // render PV
+  // Only render the first move as a full holo ghost model for higher fidelity
+  if (pv.length > 0) {
+    const firstMove = pv[0]
+    const toR = Math.floor(firstMove.to / 8)
+    const toC = firstMove.to % 8
+    const toX = (toC - 3.5) * tileSize
+    const toZ = (7 - toR - 3.5) * tileSize
+
+    const fromR = Math.floor(firstMove.from / 8)
+    const fromC = firstMove.from % 8
+    const fromX = fromC
+    const fromZ = 7 - fromR
+
+    const piece = allPieces.find(p => p.x === fromX && p.z === fromZ)
+    if (piece) {
+      const ghost = piece.group.clone()
+      ghost.position.set(toX, boardHeight, toZ)
+      // replace material
+      ghost.traverse((child: any) => {
+        if (child.isMesh) {
+          child.material = ghostMaterial
+        }
+      })
+      ghostGroup.add(ghost)
+    }
+
+    // render lines for the rest of the path?
+    if (pv.length > 1) {
+      const points = []
+      points.push(new THREE.Vector3(toX, boardHeight + 0.5, toZ))
+
+      for (let i = 1; i < pv.length; i++) {
+        const m = pv[i]
+        const tr = Math.floor(m.to / 8)
+        const tc = m.to % 8
+        const tx = (tc - 3.5) * tileSize
+        const tz = (7 - tr - 3.5) * tileSize
+        points.push(new THREE.Vector3(tx, boardHeight + 0.5, tz))
+      }
+
+      const geo = new THREE.BufferGeometry().setFromPoints(points)
+      const mat = new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 0.3, transparent: true })
+      const line = new THREE.Line(geo, mat)
+      ghostGroup.add(line)
+    }
+  }
+}
+
+// confidence aura farming 
+const auraGroup = new THREE.Group()
+scene.add(auraGroup)
+const auraRing = new THREE.Mesh(
+  new THREE.RingGeometry(0.35, 0.45, 32),
+  new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending })
+)
+const auraGlow = new THREE.Mesh(
+  new THREE.RingGeometry(0.2, 0.6, 32),
+  new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending })
+)
+auraRing.rotation.x = -Math.PI / 2
+auraGlow.rotation.x = -Math.PI / 2
+auraGlow.position.y = 0.02
+auraRing.position.y = 0.03
+auraGroup.add(auraRing, auraGlow)
+
+function updateAura(score: number) {
+  // AI is Black. Positive = White adv. Negative = Black adv.
+  // Winning = Score < -100
+  // Losing = Score > 100
+  // Draw = -100 to 100
+
+  let color = 0x0088ff
+  let intensity = 0.3
+
+  if (score < -100) { color = 0x00ff00; intensity = 0.8 }
+  if (score > 100) { color = 0xff3300; intensity = 0.6 }
+
+  const c = new THREE.Color(color)
+    ; (auraRing.material as THREE.MeshBasicMaterial).color = c
+    ; (auraGlow.material as THREE.MeshBasicMaterial).color = c
+
+  // find AI King (Black King)
+  const king = allPieces.find(p => p.type === 'king' && !p.isWhite)
+  if (king) {
+    auraGroup.position.x = king.group.position.x
+    auraGroup.position.z = king.group.position.z
+
+    gsap.to((auraRing.material as THREE.MeshBasicMaterial), { opacity: intensity, duration: 0.5 })
+    gsap.to((auraGlow.material as THREE.MeshBasicMaterial), { opacity: intensity * 0.3, duration: 0.5 })
   }
 }
 
