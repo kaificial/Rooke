@@ -1817,12 +1817,6 @@ function onMouseClick(event: MouseEvent) {
 
       return
 
-      // clear selection and highlights
-      selectedPiece = null
-      clearHighlights()
-
-      return
-
     }
   }
 
