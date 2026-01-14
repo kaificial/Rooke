@@ -486,6 +486,12 @@ function startGameTransition() {
   setTimeout(() => {
     landing.remove()
     sidebar.style.display = 'block'
+
+    // hide AI toggle button in sandbox mode
+    const vizBtn = document.getElementById('toggle-viz-btn')
+    if (vizBtn && !isAIEnabled) {
+      vizBtn.parentElement!.style.display = 'none'
+    }
   }, 800)
 }
 
@@ -1325,7 +1331,7 @@ function finalizeTurn(overrideTurn?: string) {
   console.log("finalizeTurn called. Old Turn:", currentTurn, "Override:", overrideTurn)
   // switch turns
   if (overrideTurn) {
-    currentTurn = overrideTurn
+    currentTurn = overrideTurn as 'white' | 'black'
   } else {
     currentTurn = currentTurn === 'white' ? 'black' : 'white'
   }
@@ -1745,7 +1751,7 @@ function onMouseClick(event: MouseEvent) {
         const isKingside = boardX > selectedPiece.x
         const rookX = isKingside ? 7 : 0
         const rookTargetX = isKingside ? 5 : 3
-        const rook = allPieces.find(p => p.type === 'rook' && p.isWhite === selectedPiece.isWhite && p.x === rookX && p.z === boardZ)
+        const rook = allPieces.find(p => p.type === 'rook' && p.isWhite === selectedPiece!.isWhite && p.x === rookX && p.z === boardZ)
         if (rook) {
           const rx = (rookTargetX - boardSize / 2 + 0.5) * tileSize
           const rz = (boardZ - boardSize / 2 + 0.5) * tileSize
