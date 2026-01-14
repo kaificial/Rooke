@@ -68,14 +68,12 @@ const pst_map = { p: pst_p, n: pst_n, b: pst_b, r: pst_r, q: pst_q, k: pst_k };
 // Board Representation
 let board = new Array(64).fill(null);
 let turn: 'w' | 'b' = 'w';
-let colorMultiplier = 1;
 
 // Parse FEN
 function parseFen(fen: string) {
     board.fill(null);
     const parts = fen.split(' ');
     const rows = parts[0].split('/');
-    let sq = 0;
     for (let r = 0; r < 8; r++) {
         let col = 0;
         for (let i = 0; i < rows[r].length; i++) {
@@ -174,6 +172,38 @@ function generateMoves(b: any[], color: 'w' | 'b') {
     return moves;
 }
 
+// move Ordering MVV-LVA (Most Valuable Victim :( )- Least Valuable Attacker :D )
+const pieceValues = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+function scoreMoveOrder(move: any, b: any[]): number {
+    let score = 0;
+    const target = b[move.to];
+    const attacker = b[move.from];
+
+    // Captures: MVV-LVA (capturing valuable pieces with less valuable ones is a WW)
+    if (target) {
+        const victimValue = pieceValues[target.type as keyof typeof pieceValues] || 0;
+        const attackerValue = pieceValues[attacker.type as keyof typeof pieceValues] || 0;
+        // score = 10 * victimValue - attackerValue (give priority to high value captures)
+        score = 100 + (victimValue * 10 - attackerValue);
+    }
+
+    return score;
+}
+
+function orderMoves(moves: any[], b: any[]): any[] {
+    // Score and sort moves
+    const scoredMoves = moves.map(move => ({
+        move,
+        score: scoreMoveOrder(move, b)
+    }));
+
+    // Sort highest score first
+    scoredMoves.sort((a, b) => b.score - a.score);
+
+    return scoredMoves.map(sm => sm.move);
+}
+
 // Minimax with Tree 
 let nodeCount = 0;
 
@@ -184,7 +214,7 @@ function minimax(depth: number, alpha: number, beta: number, isMaximizing: boole
     }
 
     const color = isMaximizing ? 'w' : 'b';
-    const moves = generateMoves(board, color);
+    const moves = orderMoves(generateMoves(board, color), board);
 
     if (moves.length === 0) {
         return { score: isMaximizing ? -Infinity : Infinity, line: [] };
@@ -243,7 +273,7 @@ function searchBestMove(depth: number) {
     let bestScore = (turn === 'w') ? -Infinity : Infinity;
     let bestLine: any[] = [];
 
-    const moves = generateMoves(board, turn);
+    const moves = orderMoves(generateMoves(board, turn), board);
 
     for (let i = 0; i < moves.length; i++) {
         const move = moves[i];
