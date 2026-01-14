@@ -435,8 +435,8 @@ landing.innerHTML = `
          <h1>Rooke <br> <span class="accent">Engine</span></h1>
          <p class="subtitle">A 3D chess app exploring graphics and game logic. Built with TypeScript, Vite, and Three.js.</p>
          <div class="actions">
-             <button id="mode-sandbox" class="landing-btn">SANDBOX GAME</button>
-             <button id="mode-ai" class="landing-btn outline" style="border-color:#ccb066; color:#ccb066;">VS AI</button>
+             <button id="mode-ai" class="landing-btn" style="border-color:#ccb066; background:#ccb066; color:#000;">VERSUS AI</button>
+             <button id="mode-sandbox" class="landing-btn outline">SANDBOX GAME</button>
          </div>
      </div>
      <div class="feature-grid">
