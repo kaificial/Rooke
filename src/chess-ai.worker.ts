@@ -204,13 +204,85 @@ function orderMoves(moves: any[], b: any[]): any[] {
     return scoredMoves.map(sm => sm.move);
 }
 
+// generate capture moves for quiescence search
+function generateCaptures(b: any[], color: 'w' | 'b') {
+    const allMoves = generateMoves(b, color);
+    // filter to only the captures
+    return allMoves.filter(move => b[move.to] !== null);
+}
+
+// quiescence Search search captures
+function quiescence(alpha: number, beta: number, isMaximizing: boolean, qDepth = 0): number {
+    nodeCount++;
+
+    // stand pat evaluation assume we can choose NOT to capture
+    const standPat = evaluate(board);
+
+    if (isMaximizing) {
+        // if the standing pat beats beta = beta cutoff
+        if (standPat >= beta) return beta;
+        // Update alpha if standing pat is better
+        if (standPat > alpha) alpha = standPat;
+    } else {
+        if (standPat <= alpha) return alpha;
+        if (standPat < beta) beta = standPat;
+    }
+
+    // limit quiescence depth in case of infinite searching
+    if (qDepth >= 10) return standPat;
+
+    // generate and order only the capture moves
+    const color = isMaximizing ? 'w' : 'b';
+    const captures = orderMoves(generateCaptures(board, color), board);
+
+    // if no captures
+    if (captures.length === 0) return standPat;
+
+    if (isMaximizing) {
+        let maxEval = standPat;
+        for (let move of captures) {
+            const saved = board[move.to];
+            board[move.to] = board[move.from];
+            board[move.from] = null;
+
+            const score = quiescence(alpha, beta, false, qDepth + 1);
+
+            board[move.from] = board[move.to];
+            board[move.to] = saved;
+
+            maxEval = Math.max(maxEval, score);
+            alpha = Math.max(alpha, score);
+            if (beta <= alpha) break; // Beta cutoff
+        }
+        return maxEval;
+    } else {
+        let minEval = standPat;
+        for (let move of captures) {
+            const saved = board[move.to];
+            board[move.to] = board[move.from];
+            board[move.from] = null;
+
+            const score = quiescence(alpha, beta, true, qDepth + 1);
+
+            board[move.from] = board[move.to];
+            board[move.to] = saved;
+
+            minEval = Math.min(minEval, score);
+            beta = Math.min(beta, score);
+            if (beta <= alpha) break; // alpha cutoff
+        }
+        return minEval;
+    }
+}
+
 // Minimax with Tree 
 let nodeCount = 0;
 
 function minimax(depth: number, alpha: number, beta: number, isMaximizing: boolean): { score: number, line: any[] } {
     nodeCount++;
     if (depth === 0) {
-        return { score: evaluate(board), line: [] };
+        // use quiescence search instead of static eval in case of getting the horizon effect
+        return { score: quiescence(alpha, beta, isMaximizing), line: [] };
     }
 
     const color = isMaximizing ? 'w' : 'b';
