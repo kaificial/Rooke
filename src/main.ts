@@ -435,7 +435,7 @@ landing.innerHTML = `
          <h1>Rooke <br> <span class="accent">Engine</span></h1>
          <p class="subtitle">A 3D chess app exploring graphics and game logic. Built with TypeScript, Vite, and Three.js.</p>
          <div class="actions">
-             <button id="mode-sandbox" class="landing-btn">LAUNCH DEMO</button>
+             <button id="mode-sandbox" class="landing-btn">SANDBOX GAME</button>
              <button id="mode-ai" class="landing-btn outline" style="border-color:#ccb066; color:#ccb066;">VS AI</button>
          </div>
      </div>
@@ -457,14 +457,10 @@ landing.innerHTML = `
   <div class="right-panel">
       <div class="grid-overlay" style="z-index: 2;"></div>
       <div class="tech-overlay" style="z-index: 3; position: absolute; inset: 0; pointer-events: none;">
-          <div style="position: absolute; top: 40px; right: 40px; text-align: right;">
-              <div style="color: #ccb066; font-size: 10px; letter-spacing: 2px; margin-bottom: 5px;">WE ARE:</div>
-              <div style="color: #fff; font-weight: 700; font-size: 14px; letter-spacing: 1px;">ONLINE</div>
-          </div>
+          
+
           <div style="position: absolute; bottom: 40px; left: 40px;">
-              <div style="color: #444; font-size: 10px; font-family: monospace;">ERR_00: NO_ERROR</div>
-              <div style="color: #444; font-size: 10px; font-family: monospace;">MEM: 128MB ALLOC</div>
-              <div style="color: #ccb066; font-size: 10px; font-family: monospace; margin-top: 5px;">:: READY ::</div>
+
           </div>
           <div style="position: absolute; top: 30px; left: 30px; width: 30px; height: 30px; border-top: 2px solid rgba(204, 176, 102, 0.5); border-left: 2px solid rgba(204, 176, 102, 0.5);"></div>
           <div style="position: absolute; bottom: 30px; right: 30px; width: 30px; height: 30px; border-bottom: 2px solid rgba(204, 176, 102, 0.5); border-right: 2px solid rgba(204, 176, 102, 0.5);"></div>
@@ -746,11 +742,12 @@ const ivoryMaterial = new THREE.MeshStandardMaterial({
 })
 
 const ebonyMaterial = new THREE.MeshStandardMaterial({
-  color: 0x2a2a2a, // lighter than black to stand out
+  color: 0x555555, // lighter grey for better visibility
   roughness: 0.15,
-  metalness: 0.3,
+  metalness: 0.8,
+  emissive: 0x111111, // subtle glow to prevent total blackness
   envMap: envMap,
-  envMapIntensity: 1.2 // stronger reflections
+  envMapIntensity: 2.0 // maximized reflections
 })
 
 const createPiece = (type: string, isWhite: boolean, x_coord: number, z_coord: number) => {
@@ -1168,9 +1165,9 @@ function highlightMoves(moves: Array<{ x: number, z: number }>) {
 
     // radial gradient for glow effect
     const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
-    gradient.addColorStop(0, 'rgba(100, 255, 180, 0.6)')
-    gradient.addColorStop(0.5, 'rgba(100, 255, 180, 0.3)')
-    gradient.addColorStop(1, 'rgba(100, 255, 180, 0)')
+    gradient.addColorStop(0, 'rgba(204, 176, 102, 0.6)')
+    gradient.addColorStop(0.5, 'rgba(204, 176, 102, 0.3)')
+    gradient.addColorStop(1, 'rgba(204, 176, 102, 0)')
 
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, 128, 128)
