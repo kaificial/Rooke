@@ -11,10 +11,6 @@ Built with **TypeScript**, **Three.js**, and **GSAP**
 
 Follow these steps to set up Rooke locally:
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher recommended)
-- [NPM](https://www.npmjs.com/) or [Yarn](https://yarnpkg.com/)
-
 ### Installation
 1. **Clone the repo:**
    ```bash
@@ -25,20 +21,12 @@ Follow these steps to set up Rooke locally:
    ```bash
    npm install
    ```
-
-### Running Rooke
-Start the development server with:
-```bash
-npm run dev
-```
-Open `http://localhost:5173` 
-
 ---
 
 ## Gameplay Guides
 
 ### 1. Game Modes
-- **Sandbox Demo**: Explore the 3D environment and move pieces to test the mechanics or play against friends irl.
+- **Sandbox Game Mode**: Explore the 3D environment and move pieces to test the mechanics or play against friends irl.
 - **VS AI**: Challenge the Rooke Engine. This mode activates the full "thought process" visualization (which can be toggled on or off)
 
 ### 2. Nav controls
@@ -50,10 +38,9 @@ The 3D scene uses `OrbitControls` for a fluid perspectives:
 
 ## Tech Stack
 
-- **Core**: TypeScript (v5.9 for type safe logic)
-- **3D Graphics**: Three.js (WebGL, PBR materials, dynamic lighting)
-- **Animations**: GSAP (Smooth piece transitions and UI cues)
-- **Build System**: Vite (Ultra-fast HMR and bundling)
+- **Core**: TypeScript
+- **3D Graphics**: Three.js 
+- **Animations**: GSAP 
 - **Styling**: Tailwind CSS & PostCSS
 
 ---
