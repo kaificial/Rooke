@@ -74,6 +74,20 @@ style.textContent = `
     border-color: #666;
     color: #fff;
   }
+  @media (max-width: 768px) {
+    #ui-sidebar {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      transform: none;
+      width: 100%;
+      border-radius: 4px 4px 0 0;
+      border-left: none;
+      border-right: none;
+      border-bottom: none;
+    }
+    #move-history { max-height: 80px; }
+  }
 `
 document.head.appendChild(style)
 
@@ -142,6 +156,12 @@ timerStyle.textContent = `
   }
   .timer-value.active { color: #ccb066; text-shadow: 0 0 10px rgba(204, 176, 102, 0.3); }
   .timer-divider { font-family: 'Playfair Display', serif; font-size: 20px; color: #444; margin-top: 10px; }
+  @media (max-width: 768px) {
+    #top-timer-display { top: 10px; width: 90%; }
+    .timer-container { padding: 5px 15px; gap: 10px; justify-content: space-between; width: 100%; box-sizing: border-box; }
+    .timer-value { font-size: 20px; }
+    .timer-divider { margin-top: 5px; font-size: 16px; }
+  }
 `
 document.head.appendChild(timerStyle)
 
@@ -182,6 +202,16 @@ logStyle.textContent = `
   .log-good { color: #6fc; }
   .log-bad { color: #f66; }
   .log-info { color: #aaa; }
+  @media (max-width: 768px) {
+    #ai-log {
+      top: auto;
+      bottom: 250px; /* Above sidebar */
+      right: 10px;
+      left: 10px;
+      width: auto;
+      max-height: 150px;
+    }
+  }
 `
 document.head.appendChild(logStyle)
 
@@ -237,6 +267,10 @@ materialStyle.textContent = `
   }
   #white-material { left: 40px; color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.4); }
   #black-material { right: 40px; color: #666; text-shadow: 0 0 2px rgba(0,0,0,0.5); }
+  @media (max-width: 768px) {
+    #white-material { top: 60px; left: 10px; font-size: 18px; }
+    #black-material { top: 60px; right: 10px; font-size: 18px; }
+  }
 `
 document.head.appendChild(materialStyle)
 
@@ -413,6 +447,53 @@ landingStyle.textContent = `
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
     background-size: 50px 50px;
     opacity: 0.5;
+  }
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    #landing-page {
+      flex-direction: column;
+    }
+    #landing-page .sidebar-left {
+      width: 100%;
+      height: 60px;
+      flex-direction: row;
+      padding: 0 20px;
+      border-right: none;
+      border-bottom: 1px solid #222;
+    }
+    .logo-box { font-size: 24px; }
+    #landing-page .brand-vertical {
+      writing-mode: horizontal-tb;
+      transform: none;
+      margin-bottom: 0;
+      letter-spacing: 2px;
+    }
+    #landing-page .main-content {
+      padding: 40px 20px;
+      justify-content: flex-start;
+    }
+    #landing-page nav {
+      display: none; /* Hide nav on mobile for now or make hamburger */
+    }
+    #landing-page .hero { margin-top: 40px; }
+    #landing-page h1 { font-size: 48px; margin-bottom: 20px; }
+    #landing-page .subtitle {
+      font-size: 14px;
+      padding-left: 15px;
+      margin-bottom: 30px;
+    }
+    #landing-page .actions {
+      flex-direction: column;
+      gap: 15px;
+      align-items: stretch;
+    }
+    button.landing-btn { padding: 15px; width: 100%; }
+    .feature-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-top: 40px;
+    }
+    #landing-page .right-panel { display: none; }
   }
 `
 document.head.appendChild(landingStyle)
@@ -608,7 +689,7 @@ camera.lookAt(0, 0, 0)
 // renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
-renderer.setPixelRatio(window.devicePixelRatio)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 document.querySelector<HTMLDivElement>('#app')!.appendChild(renderer.domElement)
@@ -1861,7 +1942,26 @@ function onMouseClick(event: MouseEvent) {
   }
 }
 
-window.addEventListener('click', onMouseClick)
+// Custom tap detection for touch support
+let downTime = 0
+let downX = 0
+let downY = 0
+
+window.addEventListener('pointerdown', (e) => {
+  downTime = Date.now()
+  downX = e.clientX
+  downY = e.clientY
+})
+
+window.addEventListener('pointerup', (e) => {
+  const timeDiff = Date.now() - downTime
+  const distDiff = Math.sqrt(Math.pow(e.clientX - downX, 2) + Math.pow(e.clientY - downY, 2))
+
+  if (timeDiff < 300 && distDiff < 10) {
+    onMouseClick(e)
+  }
+})
+
 
 // resize
 window.addEventListener('resize', () => {
