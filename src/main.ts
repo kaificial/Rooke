@@ -290,210 +290,185 @@ landingStyle.textContent = `
   #landing-page {
     position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
     z-index: 2000;
-    display: flex;
+    background: #0a0a0a;
     font-family: 'Inter', sans-serif;
-  }
-  
-  #landing-page .sidebar-left {
-    width: 80px;
-    background: #000;
-    height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px 0;
-    border-right: 1px solid #222;
-  }
-  .logo-box {
-    font-size: 32px; color: #ccb066;
-  }
-  #landing-page .brand-vertical {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    color: #ccb066;
-    font-weight: 800;
-    letter-spacing: 6px;
-    font-size: 14px;
-    transform: rotate(180deg);
-    margin-bottom: 60px;
+    overflow: hidden;
   }
 
-  #landing-page .main-content {
-    flex: 1;
-    padding: 0 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    background: radial-gradient(circle at 0% 50%, #151515 0%, #080808 100%);
-    position: relative;
+  /* Corner bracket accents */
+  #landing-page .corner-tl,
+  #landing-page .corner-tr,
+  #landing-page .corner-bl,
+  #landing-page .corner-br {
+    position: absolute; width: 40px; height: 40px; z-index: 3; pointer-events: none;
   }
-  
+  #landing-page .corner-tl { top: 24px; left: 24px; border-top: 2px solid rgba(204,176,102,0.5); border-left: 2px solid rgba(204,176,102,0.5); }
+  #landing-page .corner-tr { top: 24px; right: 24px; border-top: 2px solid rgba(204,176,102,0.5); border-right: 2px solid rgba(204,176,102,0.5); }
+  #landing-page .corner-bl { bottom: 24px; left: 24px; border-bottom: 2px solid rgba(204,176,102,0.5); border-left: 2px solid rgba(204,176,102,0.5); }
+  #landing-page .corner-br { bottom: 24px; right: 24px; border-bottom: 2px solid rgba(204,176,102,0.5); border-right: 2px solid rgba(204,176,102,0.5); }
+
+  /* Top nav */
   #landing-page nav {
-    position: absolute; top: 0; left: 0; width: 100%;
-    height: 80px;
-    background: #000;
-    border-bottom: 1px solid #222;
-    display: flex; align-items: center;
-    padding-left: 60px;
+    position: relative; z-index: 2;
+    height: 70px;
+    display: flex; align-items: center; justify-content: center;
     gap: 40px;
-    font-size: 13px; font-weight: 700; color: #555; letter-spacing: 2px;
+    border-bottom: 1px solid #1a1a1a;
   }
-  #landing-page nav span:hover { color: #fff; cursor: pointer; transition: color 0.3s; }
+  #landing-page nav .nav-logo {
+    font-size: 26px; color: #ccb066; margin-right: 30px;
+  }
+  #landing-page nav span {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; color: #555; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: color 0.3s;
+  }
+  #landing-page nav span:hover { color: #ccb066; }
 
-  #landing-page .hero { margin-top: 120px; }
-  
+  /* Main hero area */
+  #landing-page .hero-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    padding: 0 60px;
+    gap: 80px;
+  }
+
+  /* Left text column */
+  #landing-page .hero-text {
+    max-width: 600px;
+  }
+
   #landing-page .version-tag {
-    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
     letter-spacing: 3px;
     color: #ccb066;
-    margin-bottom: 30px;
+    margin-bottom: 28px;
     text-transform: uppercase;
-    display: flex; align-items: center; gap: 15px;
+    display: flex; align-items: center; gap: 14px;
     font-weight: 700;
   }
   #landing-page .version-tag::before {
-    content: ''; width: 40px; height: 2px; background: #ccb066; display: block;
+    content: ''; width: 36px; height: 2px; background: #ccb066; display: block;
   }
 
   #landing-page h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 96px;
-    line-height: 1.05;
-    font-weight: 500;
-    margin: 0 0 40px 0;
+    font-size: 76px;
+    line-height: 1.08;
+    font-weight: 600;
+    margin: 0 0 24px 0;
     color: #fff;
-    letter-spacing: -2px;
+    letter-spacing: -1px;
   }
-  
   #landing-page h1 .accent {
     font-style: italic;
-    color: #ccb066;
-    background: linear-gradient(45deg, #ccb066, #ffdf85);
+    background: linear-gradient(135deg, #ccb066, #ffdf85);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   #landing-page .subtitle {
-    font-size: 18px;
-    color: #888;
-    max-width: 600px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: #666;
     line-height: 1.8;
-    margin-bottom: 60px;
-    padding-left: 30px;
-    border-left: 3px solid #ccb066;
+    margin-bottom: 48px;
+    letter-spacing: 0.5px;
+    max-width: 480px;
   }
 
-  #landing-page .actions { display: flex; gap: 30px; align-items: center; }
-  
+  #landing-page .actions { display: flex; gap: 20px; align-items: center; }
+
   button.landing-btn {
+    font-family: 'Space Mono', monospace;
     background: #ccb066;
-    color: #000;
-    border: none;
-    padding: 20px 50px;
-    font-size: 14px;
+    color: #0a0a0a;
+    border: 2px solid #ccb066;
+    padding: 16px 40px;
+    font-size: 12px;
     letter-spacing: 2px;
-    font-weight: 800;
+    font-weight: 700;
     cursor: pointer;
     text-transform: uppercase;
-    transition: all 0.3s;
-    box-shadow: 0 10px 30px rgba(204, 176, 102, 0.2);
+    transition: all 0.3s ease;
+  }
+  button.landing-btn:hover {
+    background: #ddc580;
+    border-color: #ddc580;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(204,176,102,0.25);
   }
   button.landing-btn.outline {
     background: transparent;
-    color: #fff;
-    border: 1px solid #444;
-    box-shadow: none;
-  }
-  button.landing-btn:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(204, 176, 102, 0.3);
+    color: #888;
+    border: 1px solid #333;
   }
   button.landing-btn.outline:hover {
-    border-color: #fff;
-    box-shadow: 0 5px 20px rgba(255,255,255,0.1);
+    color: #fff;
+    border-color: #666;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(255,255,255,0.06);
   }
 
-  .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-    margin-top: 80px;
-    border-top: 1px solid #222;
-    padding-top: 40px;
-    max-width: 800px;
-  }
-  .feature-item h3 { font-size: 14px; color: #fff; margin: 0 0 10px 0; font-weight: 700; letter-spacing: 1px; }
-  .feature-item p { font-size: 12px; color: #666; line-height: 1.6; margin: 0; }
-
-  #landing-page .right-panel {
-    width: 40%;
-    background: #000;
+  /* Chess SVG area */
+  #landing-page .hero-visual {
+    flex-shrink: 0;
+    width: 420px; height: 420px;
     position: relative;
-    overflow: hidden;
-    border-left: 1px solid #222;
   }
-  .visual-element {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(204,176,102,0.1) 0%, rgba(0,0,0,0) 70%);
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
+  #landing-page .hero-visual svg {
+    width: 100%; height: 100%;
   }
-  .grid-overlay {
-    position: absolute; inset: 0;
-    background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-    opacity: 0.5;
+
+  /* Footer */
+  #landing-page .landing-footer {
+    position: relative; z-index: 2;
+    height: 60px;
+    border-top: 1px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #444;
   }
-  /* Mobile Responsive */
-  @media (max-width: 768px) {
-    #landing-page {
+  #landing-page .landing-footer a {
+    color: #555; text-decoration: none; transition: color 0.3s; margin-right: 24px;
+  }
+  #landing-page .landing-footer a:hover { color: #ccb066; }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    #landing-page .hero-wrap {
       flex-direction: column;
+      padding: 40px 24px;
+      gap: 40px;
+      text-align: center;
     }
-    #landing-page .sidebar-left {
-      width: 100%;
-      height: 60px;
-      flex-direction: row;
-      padding: 0 20px;
-      border-right: none;
-      border-bottom: 1px solid #222;
-    }
-    .logo-box { font-size: 24px; }
-    #landing-page .brand-vertical {
-      writing-mode: horizontal-tb;
-      transform: none;
-      margin-bottom: 0;
-      letter-spacing: 2px;
-    }
-    #landing-page .main-content {
-      padding: 40px 20px;
-      justify-content: flex-start;
-    }
-    #landing-page nav {
-      display: none; /* Hide nav on mobile for now or make hamburger */
-    }
-    #landing-page .hero { margin-top: 40px; }
-    #landing-page h1 { font-size: 48px; margin-bottom: 20px; }
-    #landing-page .subtitle {
-      font-size: 14px;
-      padding-left: 15px;
-      margin-bottom: 30px;
-    }
-    #landing-page .actions {
-      flex-direction: column;
-      gap: 15px;
-      align-items: stretch;
-    }
-    button.landing-btn { padding: 15px; width: 100%; }
-    .feature-grid {
-      grid-template-columns: 1fr;
-      gap: 20px;
-      margin-top: 40px;
-    }
-    #landing-page .right-panel { display: none; }
+    #landing-page .hero-text { max-width: 100%; }
+    #landing-page .version-tag { justify-content: center; }
+    #landing-page h1 { font-size: 44px; }
+    #landing-page .subtitle { margin-left: auto; margin-right: auto; font-size: 12px; }
+    #landing-page .actions { justify-content: center; flex-wrap: wrap; }
+    button.landing-btn { padding: 14px 28px; font-size: 11px; }
+    #landing-page .hero-visual { width: 260px; height: 260px; }
+    #landing-page .landing-footer { flex-direction: column; height: auto; padding: 16px 20px; gap: 8px; text-align: center; }
+    #landing-page .corner-tl, #landing-page .corner-tr,
+    #landing-page .corner-bl, #landing-page .corner-br { width: 24px; height: 24px; }
+  }
+  @media (max-width: 500px) {
+    #landing-page h1 { font-size: 32px; }
+    #landing-page .hero-visual { width: 200px; height: 200px; }
+    #landing-page nav { gap: 20px; }
+    #landing-page nav .nav-logo { margin-right: 10px; font-size: 22px; }
   }
 `
 document.head.appendChild(landingStyle)
@@ -501,61 +476,105 @@ document.head.appendChild(landingStyle)
 const landing = document.createElement('div')
 landing.id = 'landing-page'
 landing.innerHTML = `
-  <div class="sidebar-left">
-     <div class="logo-box">♔</div>
-     <div class="brand-vertical">ROOKE ENGINE</div>
-  </div>
-  <div class="main-content">
-     <nav>
-        <span id="nav-github">GITHUB</span>
-        <span id="nav-portfolio">VIEW MORE</span>
-        <span id="nav-about">ABOUT</span>
-     </nav>
-     <div class="hero">
-         <div class="version-tag">KAI KIM 2026</div>
-         <h1>Rooke <br> <span class="accent">Engine</span></h1>
-         <p class="subtitle">A 3D chess app exploring graphics and game logic. Built with TypeScript, Vite, and Three.js.</p>
-         <div class="actions">
-             <button id="mode-ai" class="landing-btn" style="border-color:#ccb066; background:#ccb066; color:#000;">VERSUS AI</button>
-             <button id="mode-sandbox" class="landing-btn outline">SANDBOX GAME</button>
-         </div>
-     </div>
-     <div class="feature-grid">
-        <div class="feature-item">
-            <h3>TYPESCRIPT</h3>
-            <p>Made in TypeScript to keep the game logic clean, strict, and bug free.</p>
-        </div>
-        <div class="feature-item">
-            <h3>THREE.JS</h3>
-            <p>A custom 3D scene built with Three.js which adds depth and atmosphere to every match.</p>
-        </div>
-        <div class="feature-item">
-            <h3>WEB ARCHITECTURE</h3>
-            <p>Powered by Vite for a super fast, responsive experience that needs no downloads.</p>
-        </div>
-     </div>
-  </div>
-  <div class="right-panel">
-      <div class="grid-overlay" style="z-index: 2;"></div>
-      <div class="tech-overlay" style="z-index: 3; position: absolute; inset: 0; pointer-events: none;">
-          
+  <div class="corner-tl"></div>
+  <div class="corner-tr"></div>
+  <div class="corner-bl"></div>
+  <div class="corner-br"></div>
 
-          <div style="position: absolute; bottom: 40px; left: 40px;">
+  <nav>
+    <span class="nav-logo">♔</span>
+    <span id="nav-github">GITHUB</span>
+    <span id="nav-portfolio">PORTFOLIO</span>
+    <span id="nav-about">ABOUT</span>
+  </nav>
 
-          </div>
-          <div style="position: absolute; top: 30px; left: 30px; width: 30px; height: 30px; border-top: 2px solid rgba(204, 176, 102, 0.5); border-left: 2px solid rgba(204, 176, 102, 0.5);"></div>
-          <div style="position: absolute; bottom: 30px; right: 30px; width: 30px; height: 30px; border-bottom: 2px solid rgba(204, 176, 102, 0.5); border-right: 2px solid rgba(204, 176, 102, 0.5);"></div>
+  <div class="hero-wrap">
+    <div class="hero-text">
+      <div class="version-tag">KAI KIM 2026</div>
+      <h1>Rooke<br><span class="accent">Engine</span></h1>
+      <p class="subtitle">A 3D chess experience built with TypeScript, Three.js, and Vite. Challenge the AI or play in sandbox mode.</p>
+      <div class="actions">
+        <button id="mode-ai" class="landing-btn">VERSUS AI</button>
+        <button id="mode-sandbox" class="landing-btn outline">SANDBOX GAME</button>
       </div>
-      <video src="/Screen%20Recording%202026-01-08%20182219.mp4#t=0.1" muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8; filter: grayscale(40%) contrast(1.2);"></video>
+    </div>
+
+    <div class="hero-visual">
+      <svg viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Isometric chessboard base -->
+        <g transform="translate(210 320)">
+          <!-- Board rows (isometric projection) -->
+          <g opacity="0.6">
+            <!-- Row 1 -->
+            <path d="M0,-80 L80,-40 L0,0 L-80,-40 Z" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
+            <path d="M0,-80 L80,-40 L160,-80 L80,-120 Z" fill="#111" stroke="#333" stroke-width="0.5"/>
+            <path d="M-160,-80 L-80,-40 L0,-80 L-80,-120 Z" fill="#111" stroke="#333" stroke-width="0.5"/>
+            <!-- Row 2 -->
+            <path d="M-80,-40 L0,0 L80,-40 L0,-80 Z" fill="#181818" stroke="#333" stroke-width="0.5"/>
+            <path d="M80,-40 L160,0 L240,-40 L160,-80 Z" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
+            <path d="M-240,-40 L-160,0 L-80,-40 L-160,-80 Z" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
+            <!-- Row 3 -->
+            <path d="M0,0 L80,40 L160,0 L80,-40 Z" fill="#111" stroke="#333" stroke-width="0.5"/>
+            <path d="M-160,0 L-80,40 L0,0 L-80,-40 Z" fill="#111" stroke="#333" stroke-width="0.5"/>
+            <!-- Row 4 -->
+            <path d="M-80,40 L0,80 L80,40 L0,0 Z" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
+          </g>
+
+          <!-- Highlight squares -->
+          <path d="M0,-80 L80,-40 L0,0 L-80,-40 Z" fill="rgba(204,176,102,0.08)" stroke="rgba(204,176,102,0.3)" stroke-width="1"/>
+          <path d="M80,-40 L160,0 L80,40 L0,0 Z" fill="rgba(204,176,102,0.04)" stroke="rgba(204,176,102,0.15)" stroke-width="0.5"/>
+        </g>
+
+        <!-- Rook piece (stylised) -->
+        <g transform="translate(210 100)">
+          <!-- Rook body -->
+          <rect x="-28" y="40" width="56" height="100" rx="3" fill="#ccb066" opacity="0.9"/>
+          <!-- Rook base -->
+          <rect x="-36" y="130" width="72" height="16" rx="3" fill="#b89c50"/>
+          <rect x="-32" y="140" width="64" height="12" rx="2" fill="#a88e45"/>
+          <!-- Rook battlements -->
+          <rect x="-28" y="20" width="12" height="28" rx="1" fill="#ccb066"/>
+          <rect x="-8" y="20" width="16" height="28" rx="1" fill="#ccb066"/>
+          <rect x="16" y="20" width="12" height="28" rx="1" fill="#ccb066"/>
+          <!-- Rook top bar -->
+          <rect x="-32" y="36" width="64" height="10" rx="2" fill="#ddc580"/>
+          <!-- Shadow/depth lines -->
+          <line x1="-20" y1="55" x2="-20" y2="125" stroke="#b89c50" stroke-width="1" opacity="0.5"/>
+          <line x1="0" y1="55" x2="0" y2="125" stroke="#b89c50" stroke-width="1" opacity="0.3"/>
+          <line x1="20" y1="55" x2="20" y2="125" stroke="#b89c50" stroke-width="1" opacity="0.5"/>
+          <!-- Rook window/slit detail -->
+          <rect x="-10" y="70" width="20" height="30" rx="2" fill="#0a0a0a" opacity="0.4"/>
+        </g>
+
+        <!-- Corner brackets (matching landing page corners) -->
+        <g stroke="rgba(204,176,102,0.5)" stroke-width="2" fill="none">
+          <!-- Top-left -->
+          <polyline points="24,54 24,24 54,24"/>
+          <!-- Top-right -->
+          <polyline points="366,24 396,24 396,54"/>
+          <!-- Bottom-left -->
+          <polyline points="24,366 24,396 54,396"/>
+          <!-- Bottom-right -->
+          <polyline points="396,366 396,396 366,396"/>
+        </g>
+
+        <!-- Ambient glow behind rook -->
+        <circle cx="210" cy="200" r="120" fill="url(#rookGlow)" opacity="0.6"/>
+        <defs>
+          <radialGradient id="rookGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ccb066" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#ccb066" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <div class="landing-footer">
+    <div>© 2026 ROOKE ENGINE &bull; KAI KIM</div>
   </div>
 `
 document.body.appendChild(landing)
-
-const landingVideo = landing.querySelector('video')
-if (landingVideo) {
-  // \\\
-  landingVideo.currentTime = 0
-}
 
 
 
