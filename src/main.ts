@@ -304,10 +304,10 @@ landingStyle.textContent = `
   #landing-page .corner-br {
     position: absolute; width: 40px; height: 40px; z-index: 3; pointer-events: none;
   }
-  #landing-page .corner-tl { top: 24px; left: 24px; border-top: 2px solid rgba(204,176,102,0.5); border-left: 2px solid rgba(204,176,102,0.5); }
-  #landing-page .corner-tr { top: 24px; right: 24px; border-top: 2px solid rgba(204,176,102,0.5); border-right: 2px solid rgba(204,176,102,0.5); }
-  #landing-page .corner-bl { bottom: 24px; left: 24px; border-bottom: 2px solid rgba(204,176,102,0.5); border-left: 2px solid rgba(204,176,102,0.5); }
-  #landing-page .corner-br { bottom: 24px; right: 24px; border-bottom: 2px solid rgba(204,176,102,0.5); border-right: 2px solid rgba(204,176,102,0.5); }
+  #landing-page .corner-tl { top: 15px; left: 24px; border-top: 2px solid rgba(204,176,102,0.5); border-left: 2px solid rgba(204,176,102,0.5); }
+  #landing-page .corner-tr { top: 15px; right: 24px; border-top: 2px solid rgba(204,176,102,0.5); border-right: 2px solid rgba(204,176,102,0.5); }
+  #landing-page .corner-bl { bottom: 10px; left: 24px; border-bottom: 2px solid rgba(204,176,102,0.5); border-left: 2px solid rgba(204,176,102,0.5); }
+  #landing-page .corner-br { bottom: 10px; right: 24px; border-bottom: 2px solid rgba(204,176,102,0.5); border-right: 2px solid rgba(204,176,102,0.5); }
 
   /* Top nav */
   #landing-page nav {
