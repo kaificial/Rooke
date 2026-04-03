@@ -283,51 +283,135 @@ document.body.appendChild(blackMat);
 document.getElementById('exit-game-btn')?.addEventListener('click', () => {
   window.location.reload()
 })
-// Landing Page Implementation
+document.getElementById('nav-logo')?.addEventListener('click', () => {
+  window.location.reload()
+})
 // Landing Page Implementation
 const landingStyle = document.createElement('style')
 landingStyle.textContent = `
   #landing-page {
     position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
     z-index: 2000;
-    background: #0a0a0a;
+    background: #090909;
     font-family: 'Inter', sans-serif;
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
-  /* Corner bracket accents */
-  #landing-page .corner-tl,
-  #landing-page .corner-tr,
-  #landing-page .corner-bl,
-  #landing-page .corner-br {
-    position: absolute; width: 40px; height: 40px; z-index: 3; pointer-events: none;
+  /* Dot grid background */
+  #landing-page::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    z-index: 0;
   }
-  #landing-page .corner-tl { top: 15px; left: 24px; border-top: 2px solid rgba(204,176,102,0.5); border-left: 2px solid rgba(204,176,102,0.5); }
-  #landing-page .corner-tr { top: 15px; right: 24px; border-top: 2px solid rgba(204,176,102,0.5); border-right: 2px solid rgba(204,176,102,0.5); }
-  #landing-page .corner-bl { bottom: 10px; left: 24px; border-bottom: 2px solid rgba(204,176,102,0.5); border-left: 2px solid rgba(204,176,102,0.5); }
-  #landing-page .corner-br { bottom: 10px; right: 24px; border-bottom: 2px solid rgba(204,176,102,0.5); border-right: 2px solid rgba(204,176,102,0.5); }
+
+  /* Vertical accent lines */
+  #landing-page::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: 
+      linear-gradient(90deg, transparent 47px, rgba(255,255,255,0.025) 47px, rgba(255,255,255,0.025) 48px, transparent 48px),
+      linear-gradient(90deg, transparent calc(100% - 48px), rgba(255,255,255,0.025) calc(100% - 48px), rgba(255,255,255,0.025) calc(100% - 47px), transparent calc(100% - 47px));
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* glow */
+  #landing-page .ambient-glow {
+    position: absolute;
+    top: -30%; right: -5%;
+    width: 65%; height: 120%;
+    background: radial-gradient(ellipse at center, rgba(204,176,102,0.04) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
   /* Top nav */
   #landing-page nav {
-    position: relative; z-index: 2;
-    height: 70px;
-    display: flex; align-items: center; justify-content: center;
-    gap: 40px;
-    border-bottom: 1px solid #1a1a1a;
+    position: relative; z-index: 10;
+    height: 64px;
+    display: flex; align-items: center;
+    justify-content: center;
+    padding: 0 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
-  #landing-page nav .nav-logo {
-    font-size: 26px; color: #ccb066; margin-right: 30px;
+  #landing-page .nav-logo {
+    position: absolute;
+    left: 48px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s;
   }
-  #landing-page nav span {
+  #landing-page .nav-logo:hover {
+    opacity: 0.8;
+  }
+  #landing-page .nav-logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #landing-page .nav-logo-icon img {
+    height: 28px;
+    width: auto;
+  }
+  #landing-page .nav-links {
+    display: flex; gap: 40px; align-items: center;
+  }
+  #landing-page .nav-links span {
     font-family: 'Space Mono', monospace;
-    font-size: 11px; color: #555; letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer; transition: color 0.3s;
+    font-size: 11px; color: #555; cursor: pointer;
+    transition: color 0.3s;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
   }
-  #landing-page nav span:hover { color: #ccb066; }
+  #landing-page .nav-links span:hover { color: #fff; }
+  #landing-page .nav-actions {
+    position: absolute;
+    right: 48px;
+    display: flex; gap: 12px; align-items: center;
+  }
+  /* Sharp rectangular nav buttons */
+  #landing-page .nav-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    padding: 9px 22px;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  #landing-page .nav-btn.ghost {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #ccc;
+  }
+  #landing-page .nav-btn.ghost:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.3);
+    color: #fff;
+  }
+  #landing-page .nav-btn.filled {
+    background: #fff;
+    border: 1px solid #fff;
+    color: #090909;
+    font-weight: 600;
+  }
+  #landing-page .nav-btn.filled:hover {
+    background: #e0e0e0;
+    border-color: #e0e0e0;
+  }
 
-  /* Main hero area */
+  /* Hero section */
   #landing-page .hero-wrap {
     flex: 1;
     display: flex;
@@ -336,26 +420,49 @@ landingStyle.textContent = `
     position: relative;
     z-index: 1;
     padding: 0 60px;
-    gap: 80px;
+    gap: 0px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   /* Left text column */
   #landing-page .hero-text {
-    max-width: 600px;
+    max-width: 540px;
+    flex-shrink: 0;
   }
 
-  #landing-page .version-tag {
+  /* Bracket tagline */
+  #landing-page .tagline {
+    display: inline-block;
+    position: relative;
+    padding: 8px 18px;
+    margin-bottom: 36px;
     font-family: 'Space Mono', monospace;
     font-size: 11px;
-    letter-spacing: 3px;
     color: #ccb066;
-    margin-bottom: 28px;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    display: flex; align-items: center; gap: 14px;
     font-weight: 700;
   }
-  #landing-page .version-tag::before {
-    content: ''; width: 36px; height: 2px; background: #ccb066; display: block;
+  /* Top-left bracket */
+  #landing-page .tagline::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 10px; height: 10px;
+    border-top: 1px solid rgba(204,176,102,0.4);
+    border-left: 1px solid rgba(204,176,102,0.4);
+  }
+  /* Bottom-right bracket */
+  #landing-page .tagline::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 10px; height: 10px;
+    border-bottom: 1px solid rgba(204,176,102,0.4);
+    border-right: 1px solid rgba(204,176,102,0.4);
   }
 
   #landing-page h1 {
@@ -380,95 +487,149 @@ landingStyle.textContent = `
     color: #666;
     line-height: 1.8;
     margin-bottom: 48px;
-    letter-spacing: 0.5px;
     max-width: 480px;
+    letter-spacing: 0.5px;
   }
 
-  #landing-page .actions { display: flex; gap: 20px; align-items: center; }
+  #landing-page .actions {
+    display: flex; gap: 16px; align-items: center;
+  }
 
+  /* Sharp rectangular hero buttons */
   button.landing-btn {
     font-family: 'Space Mono', monospace;
-    background: #ccb066;
-    color: #0a0a0a;
-    border: 2px solid #ccb066;
     padding: 16px 40px;
     font-size: 12px;
-    letter-spacing: 2px;
     font-weight: 700;
     cursor: pointer;
-    text-transform: uppercase;
     transition: all 0.3s ease;
+    border-radius: 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
   }
-  button.landing-btn:hover {
-    background: #ddc580;
-    border-color: #ddc580;
-    transform: translateY(-3px);
-    box-shadow: 0 12px 32px rgba(204,176,102,0.25);
-  }
-  button.landing-btn.outline {
+  button.landing-btn.primary {
     background: transparent;
     color: #888;
     border: 1px solid #333;
   }
-  button.landing-btn.outline:hover {
+  button.landing-btn.primary:hover {
     color: #fff;
     border-color: #666;
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(255,255,255,0.06);
   }
-
-  /* Chess SVG area */
-  #landing-page .hero-visual {
-    flex-shrink: 0;
-    width: 420px; height: 420px;
-    position: relative;
+  button.landing-btn.filled {
+    background: #ccb066;
+    color: #0a0a0a;
+    border: 2px solid #ccb066;
+    font-weight: 700;
   }
-  #landing-page .hero-visual svg {
-    width: 100%; height: 100%;
+  button.landing-btn.filled:hover {
+    background: #ddc580;
+    border-color: #ddc580;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(204,176,102,0.25);
+  }
+
+  /* SVG Rook Area */
+  #landing-page .hero-visual {
+    flex: 1;
+    min-width: 420px;
+    height: 560px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-left: -20px;
+    overflow: visible;
+  }
+
+  #svg-rook-canvas {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .isocube {
+    pointer-events: auto;
+    cursor: pointer;
+    will-change: transform;
+  }
+  
+  .isocube polygon {
+    stroke-linejoin: round;
   }
 
   /* Footer */
   #landing-page .landing-footer {
     position: relative; z-index: 2;
-    height: 60px;
-    border-top: 1px solid #1a1a1a;
-    display: flex; align-items: center; justify-content: center;
-    padding: 0 40px;
+    padding: 24px 80px 28px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  #landing-page .footer-label {
     font-family: 'Space Mono', monospace;
     font-size: 10px;
+    color: #555;
+    margin-bottom: 14px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #444;
   }
-  #landing-page .landing-footer a {
-    color: #555; text-decoration: none; transition: color 0.3s; margin-right: 24px;
+  #landing-page .footer-techs {
+    display: flex;
+    align-items: center;
+    gap: 40px;
   }
-  #landing-page .landing-footer a:hover { color: #ccb066; }
+  #landing-page .tech-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #555;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+  #landing-page .tech-badge:hover { color: #999; }
+  #landing-page .tech-badge .tech-icon {
+    font-size: 18px;
+    opacity: 0.7;
+  }
 
-  /* Mobile */
-  @media (max-width: 900px) {
+  /* Responsive */
+  @media (max-width: 1100px) {
     #landing-page .hero-wrap {
       flex-direction: column;
-      padding: 40px 24px;
-      gap: 40px;
+      padding: 40px 40px;
+      gap: 30px;
       text-align: center;
     }
     #landing-page .hero-text { max-width: 100%; }
-    #landing-page .version-tag { justify-content: center; }
-    #landing-page h1 { font-size: 44px; }
-    #landing-page .subtitle { margin-left: auto; margin-right: auto; font-size: 12px; }
+    #landing-page .tagline { justify-content: center; }
+    #landing-page h1 { font-size: 48px; }
+    #landing-page .subtitle { margin-left: auto; margin-right: auto; font-size: 14px; }
     #landing-page .actions { justify-content: center; flex-wrap: wrap; }
-    button.landing-btn { padding: 14px 28px; font-size: 11px; }
-    #landing-page .hero-visual { width: 260px; height: 260px; }
-    #landing-page .landing-footer { flex-direction: column; height: auto; padding: 16px 20px; gap: 8px; text-align: center; }
-    #landing-page .corner-tl, #landing-page .corner-tr,
-    #landing-page .corner-bl, #landing-page .corner-br { width: 24px; height: 24px; }
+    #landing-page .hero-visual { min-width: unset; width: 100%; height: 350px; }
+    #landing-page .landing-footer { padding: 20px 40px; }
+    #landing-page .footer-techs { gap: 24px; flex-wrap: wrap; }
+  }
+  @media (max-width: 768px) {
+    #landing-page nav { padding: 0 20px; }
+    #landing-page .nav-links { display: none; }
+    #landing-page .hero-wrap { padding: 30px 24px; }
+    #landing-page h1 { font-size: 36px; letter-spacing: -1px; }
+    #landing-page .hero-visual { height: 280px; }
+    button.landing-btn { padding: 12px 24px; font-size: 13px; }
+    #landing-page .landing-footer { padding: 16px 24px; }
+    #landing-page .tech-badge { font-size: 13px; }
   }
   @media (max-width: 500px) {
-    #landing-page h1 { font-size: 32px; }
-    #landing-page .hero-visual { width: 200px; height: 200px; }
-    #landing-page nav { gap: 20px; }
-    #landing-page nav .nav-logo { margin-right: 10px; font-size: 22px; }
+    #landing-page h1 { font-size: 30px; }
+    #landing-page .hero-visual { height: 220px; }
+    #landing-page .nav-actions { gap: 6px; }
+    #landing-page .nav-btn { padding: 7px 14px; font-size: 12px; }
   }
 `
 document.head.appendChild(landingStyle)
@@ -476,105 +637,183 @@ document.head.appendChild(landingStyle)
 const landing = document.createElement('div')
 landing.id = 'landing-page'
 landing.innerHTML = `
-  <div class="corner-tl"></div>
-  <div class="corner-tr"></div>
-  <div class="corner-bl"></div>
-  <div class="corner-br"></div>
+  <div class="ambient-glow"></div>
 
-  <nav>
-    <span class="nav-logo">♔</span>
-    <span id="nav-github">GITHUB</span>
-    <span id="nav-portfolio">PORTFOLIO</span>
-    <span id="nav-about">ABOUT</span>
+  <nav style="justify-content: center;">
+    <div id="nav-logo" class="nav-logo">
+      <div class="nav-logo-icon">
+        <img src="/logo-new.svg" alt="Rooke Logo">
+      </div>
+    </div>
+    <div class="nav-links">
+      <span id="nav-github">GitHub</span>
+      <span id="nav-about">About</span>
+      <span id="nav-portfolio">Portfolio</span>
+    </div>
+    <div class="nav-actions">
+      <button id="mode-sandbox" class="nav-btn ghost">Sandbox</button>
+      <button id="mode-ai" class="nav-btn filled">Play vs AI</button>
+    </div>
   </nav>
 
   <div class="hero-wrap">
     <div class="hero-text">
-      <div class="version-tag">KAI KIM 2026</div>
+      <div class="tagline">3D Chess Engine. See the AI think.</div>
       <h1>Rooke<br><span class="accent">Engine</span></h1>
       <p class="subtitle">A 3D chess experience built with TypeScript, Three.js, and Vite. Challenge the AI or play in sandbox mode.</p>
       <div class="actions">
-        <button id="mode-ai" class="landing-btn">VERSUS AI</button>
-        <button id="mode-sandbox" class="landing-btn outline">SANDBOX GAME</button>
+        <button id="mode-ai-hero" class="landing-btn filled">Versus AI</button>
+        <button id="mode-sandbox-hero" class="landing-btn primary">Sandbox Game</button>
       </div>
     </div>
 
     <div class="hero-visual">
-      <svg viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Isometric chessboard base -->
-        <g transform="translate(210 320)">
-          <!-- Board rows (isometric projection) -->
-          <g opacity="0.6">
-            <!-- Row 1 -->
-            <path d="M0,-80 L80,-40 L0,0 L-80,-40 Z" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
-            <path d="M0,-80 L80,-40 L160,-80 L80,-120 Z" fill="#111" stroke="#333" stroke-width="0.5"/>
-            <path d="M-160,-80 L-80,-40 L0,-80 L-80,-120 Z" fill="#111" stroke="#333" stroke-width="0.5"/>
-            <!-- Row 2 -->
-            <path d="M-80,-40 L0,0 L80,-40 L0,-80 Z" fill="#181818" stroke="#333" stroke-width="0.5"/>
-            <path d="M80,-40 L160,0 L240,-40 L160,-80 Z" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
-            <path d="M-240,-40 L-160,0 L-80,-40 L-160,-80 Z" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
-            <!-- Row 3 -->
-            <path d="M0,0 L80,40 L160,0 L80,-40 Z" fill="#111" stroke="#333" stroke-width="0.5"/>
-            <path d="M-160,0 L-80,40 L0,0 L-80,-40 Z" fill="#111" stroke="#333" stroke-width="0.5"/>
-            <!-- Row 4 -->
-            <path d="M-80,40 L0,80 L80,40 L0,0 Z" fill="#1a1a1a" stroke="#333" stroke-width="0.5"/>
-          </g>
-
-          <!-- Highlight squares -->
-          <path d="M0,-80 L80,-40 L0,0 L-80,-40 Z" fill="rgba(204,176,102,0.08)" stroke="rgba(204,176,102,0.3)" stroke-width="1"/>
-          <path d="M80,-40 L160,0 L80,40 L0,0 Z" fill="rgba(204,176,102,0.04)" stroke="rgba(204,176,102,0.15)" stroke-width="0.5"/>
-        </g>
-
-        <!-- Rook piece (stylised) -->
-        <g transform="translate(210 100)">
-          <!-- Rook body -->
-          <rect x="-28" y="40" width="56" height="100" rx="3" fill="#ccb066" opacity="0.9"/>
-          <!-- Rook base -->
-          <rect x="-36" y="130" width="72" height="16" rx="3" fill="#b89c50"/>
-          <rect x="-32" y="140" width="64" height="12" rx="2" fill="#a88e45"/>
-          <!-- Rook battlements -->
-          <rect x="-28" y="20" width="12" height="28" rx="1" fill="#ccb066"/>
-          <rect x="-8" y="20" width="16" height="28" rx="1" fill="#ccb066"/>
-          <rect x="16" y="20" width="12" height="28" rx="1" fill="#ccb066"/>
-          <!-- Rook top bar -->
-          <rect x="-32" y="36" width="64" height="10" rx="2" fill="#ddc580"/>
-          <!-- Shadow/depth lines -->
-          <line x1="-20" y1="55" x2="-20" y2="125" stroke="#b89c50" stroke-width="1" opacity="0.5"/>
-          <line x1="0" y1="55" x2="0" y2="125" stroke="#b89c50" stroke-width="1" opacity="0.3"/>
-          <line x1="20" y1="55" x2="20" y2="125" stroke="#b89c50" stroke-width="1" opacity="0.5"/>
-          <!-- Rook window/slit detail -->
-          <rect x="-10" y="70" width="20" height="30" rx="2" fill="#0a0a0a" opacity="0.4"/>
-        </g>
-
-        <!-- Corner brackets (matching landing page corners) -->
-        <g stroke="rgba(204,176,102,0.5)" stroke-width="2" fill="none">
-          <!-- Top-left -->
-          <polyline points="24,54 24,24 54,24"/>
-          <!-- Top-right -->
-          <polyline points="366,24 396,24 396,54"/>
-          <!-- Bottom-left -->
-          <polyline points="24,366 24,396 54,396"/>
-          <!-- Bottom-right -->
-          <polyline points="396,366 396,396 366,396"/>
-        </g>
-
-        <!-- Ambient glow behind rook -->
-        <circle cx="210" cy="200" r="120" fill="url(#rookGlow)" opacity="0.6"/>
-        <defs>
-          <radialGradient id="rookGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#ccb066" stop-opacity="0.15"/>
-            <stop offset="100%" stop-color="#ccb066" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-      </svg>
+      <svg id="svg-rook-canvas" viewBox="-200 -250 400 500"></svg>
     </div>
   </div>
 
   <div class="landing-footer">
-    <div>© 2026 ROOKE ENGINE &bull; KAI KIM</div>
+    <div class="footer-label">Built with</div>
+    <div class="footer-techs">
+      <span class="tech-badge"><span class="tech-icon">◆</span> TypeScript</span>
+      <span class="tech-badge"><span class="tech-icon">▲</span> Three.js</span>
+      <span class="tech-badge"><span class="tech-icon">◇</span> Vite</span>
+      <span class="tech-badge"><span class="tech-icon">♜</span> GSAP</span>
+    </div>
   </div>
 `
 document.body.appendChild(landing)
+
+  ; (function initIsometricRook() {
+    const svg = document.getElementById('svg-rook-canvas')
+    if (!svg) return
+
+    const voxels: { x: number, y: number, z: number }[] = []
+
+    // Z=0 (5x5 rounded)
+    for (let x = -2; x <= 2; x++) {
+      for (let y = -2; y <= 2; y++) {
+        if (Math.abs(x) === 2 && Math.abs(y) === 2) continue; // remove corners
+        voxels.push({ x, y, z: 0 })
+      }
+    }
+
+    // Z=1 (3x3 solid)
+    for (let x = -1; x <= 1; x++) {
+      for (let y = -1; y <= 1; y++) {
+        voxels.push({ x, y, z: 1 })
+      }
+    }
+
+    // Z=2 to 5 (3x3 cross cylinder)
+    for (let z = 2; z <= 5; z++) {
+      voxels.push({ x: 0, y: 0, z })
+      voxels.push({ x: -1, y: 0, z })
+      voxels.push({ x: 1, y: 0, z })
+      voxels.push({ x: 0, y: -1, z })
+      voxels.push({ x: 0, y: 1, z })
+    }
+
+    // Z=6 (3x3 solid)
+    for (let x = -1; x <= 1; x++) {
+      for (let y = -1; y <= 1; y++) {
+        voxels.push({ x, y, z: 6 })
+      }
+    }
+
+    // Z=7 (5x5 rounded)
+    for (let x = -2; x <= 2; x++) {
+      for (let y = -2; y <= 2; y++) {
+        if (Math.abs(x) === 2 && Math.abs(y) === 2) continue;
+        voxels.push({ x, y, z: 7 })
+      }
+    }
+
+    // Z=8 (Crown battlements)
+    const battlements = [
+      { x: -1, y: -2 }, { x: 1, y: -2 },
+      { x: -1, y: 2 }, { x: 1, y: 2 },
+      { x: -2, y: -1 }, { x: -2, y: 1 },
+      { x: 2, y: -1 }, { x: 2, y: 1 }
+    ]
+    battlements.forEach(b => voxels.push({ ...b, z: 8 }))
+
+    // Painter's algorithm depth sorting
+    voxels.sort((a, b) => (a.x + a.y + a.z) - (b.x + b.y + b.z))
+
+    const W = 22
+    const H = 12
+    const ns = 'http://www.w3.org/2000/svg'
+
+    voxels.forEach((v, index) => {
+      const cx = (v.x - v.y) * W
+      const cy = (v.x + v.y) * H - (v.z * 2 * H) + 80 // +80 offsets perfectly into view
+
+      const group = document.createElementNS(ns, 'g')
+      group.setAttribute('class', 'isocube')
+
+      // Top Face
+      const top = document.createElementNS(ns, 'polygon')
+      top.setAttribute('points', `0,${-2 * H} ${W},${-H} 0,0 ${-W},${-H}`)
+      top.setAttribute('fill', '#dcb756') // gold highlight
+      top.setAttribute('stroke', 'rgba(0, 0, 0, 0.25)')
+      top.setAttribute('stroke-width', '1')
+
+      // Left Face
+      const left = document.createElementNS(ns, 'polygon')
+      left.setAttribute('points', `0,0 ${-W},${-H} ${-W},${H} 0,${2 * H}`)
+      left.setAttribute('fill', '#b48d3c') // gold base
+      left.setAttribute('stroke', 'rgba(0, 0, 0, 0.25)')
+      left.setAttribute('stroke-width', '1')
+
+      // Right Face
+      const right = document.createElementNS(ns, 'polygon')
+      right.setAttribute('points', `0,0 ${W},${-H} ${W},${H} 0,${2 * H}`)
+      right.setAttribute('fill', '#856322') // gold shadow
+      right.setAttribute('stroke', 'rgba(0, 0, 0, 0.25)')
+      right.setAttribute('stroke-width', '1')
+
+      group.appendChild(top)
+      group.appendChild(left)
+      group.appendChild(right)
+      svg.appendChild(group)
+
+      // GSAP Intro Assembly Animation 
+      gsap.set(group, { x: cx, y: cy - 250, opacity: 0 })
+      gsap.to(group, {
+        y: cy,
+        opacity: 1,
+        duration: 1.5,
+        delay: 0.015 * index,
+        ease: 'back.out(1)'
+      })
+
+      // GSAP Hover 
+      group.addEventListener('mouseenter', () => {
+        gsap.to(group, { y: cy - 12, duration: 0.3, ease: 'power2.out' })
+        gsap.to(top, { fill: '#f6d173', duration: 0.3 })
+        gsap.to(left, { fill: '#d2a64b', duration: 0.3 })
+        gsap.to(right, { fill: '#a47e33', duration: 0.3 })
+      })
+
+      group.addEventListener('mouseleave', () => {
+        gsap.to(group, { y: cy, duration: 0.6, ease: 'bounce.out' })
+        gsap.to(top, { fill: '#dcb756', duration: 0.5 })
+        gsap.to(left, { fill: '#b48d3c', duration: 0.5 })
+        gsap.to(right, { fill: '#856322', duration: 0.5 })
+      })
+    })
+  })()
+
+// Hero button event handlers (hero section duplicates nav buttons)
+document.getElementById('mode-ai-hero')?.addEventListener('click', () => {
+  isAIEnabled = true
+  startGameTransition()
+})
+document.getElementById('mode-sandbox-hero')?.addEventListener('click', () => {
+  isAIEnabled = false
+  startGameTransition()
+})
 
 
 
@@ -603,7 +842,6 @@ document.getElementById('mode-sandbox')?.addEventListener('click', () => {
 
 document.getElementById('mode-ai')?.addEventListener('click', () => {
   isAIEnabled = true
-  startGameTransition()
   startGameTransition()
 })
 
@@ -1312,7 +1550,7 @@ let animatingPiece: {
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
+  return `${m}:${s.toString().padStart(2, '0')} `
 }
 
 function updateTimers() {
@@ -1384,7 +1622,7 @@ function updateMoveHistory(moveText: string, isWhite: boolean) {
 
   if (isWhite) {
     const row = document.createElement('tr')
-    row.innerHTML = `<td>${moveNumber}.</td><td>${moveText}</td><td></td>`
+    row.innerHTML = `< td > ${moveNumber}.</td><td>${moveText}</td > <td></td>`
     list.appendChild(row)
     list.scrollTop = list.scrollHeight
   } else {
