@@ -1622,7 +1622,7 @@ function updateMoveHistory(moveText: string, isWhite: boolean) {
 
   if (isWhite) {
     const row = document.createElement('tr')
-    row.innerHTML = `< td > ${moveNumber}.</td><td>${moveText}</td > <td></td>`
+    row.innerHTML = `<td>${moveNumber}.</td><td>${moveText}</td><td></td>`
     list.appendChild(row)
     list.scrollTop = list.scrollHeight
   } else {
@@ -1658,47 +1658,49 @@ function updateMaterialDisplay() {
 
 
 function finalizeTurn(overrideTurn?: string) {
+  console.log("---- finalizeTurn START ---- LastMove:", !!lastMove)
   if (lastMove) {
     const notation = toChessNotation(lastMove)
+    console.log("Generated Notation:", notation)
     updateMoveHistory(notation, lastMove.piece.isWhite)
   }
 
-
   updateMaterialDisplay()
 
-  console.log("finalizeTurn called. Old Turn:", currentTurn, "Override:", overrideTurn)
+  const oldTurn = currentTurn
   // switch turns
   if (overrideTurn) {
     currentTurn = overrideTurn as 'white' | 'black'
   } else {
     currentTurn = currentTurn === 'white' ? 'black' : 'white'
   }
-  console.log("New Turn:", currentTurn)
+  console.log(`Turn switched from ${oldTurn} to ${currentTurn}`)
 
   let statusText = (currentTurn === 'white' ? "White" : "Black") + "'s Turn"
 
   // check for check/checkmate
-  if (isInCheck(currentTurn === 'white')) {
-    if (isCheckmate(currentTurn === 'white')) {
-      statusText = `Checkmate! ${currentTurn === 'white' ? "Black" : "White"} Wins!`
-      console.log(statusText)
+  const isWhiteNow = currentTurn === 'white'
+  if (isInCheck(isWhiteNow)) {
+    if (isCheckmate(isWhiteNow)) {
+      statusText = `Checkmate! ${isWhiteNow ? "Black" : "White"} Wins!`
+      console.log("CHECKMATE DETECTED:", statusText)
       gameOver = true
     } else {
       statusText += " (CHECK)"
-      console.log(`${currentTurn === 'white' ? 'White' : 'Black'} is in check!`)
+      console.log(`${isWhiteNow ? 'White' : 'Black'} is in check!`)
     }
   }
 
   const statusEl = document.getElementById('game-status')
   if (statusEl) statusEl.innerText = statusText
 
-
   // AI Trigger
+  console.log(`AI Status: enabled=${isAIEnabled}, turn=${currentTurn}, gameOver=${gameOver}`)
   if (isAIEnabled && currentTurn === 'black' && !gameOver) {
-    console.log("Requesting AI Move...")
+    console.log(">>> Requesting AI Move from Worker...")
     const fen = generateFen()
+    console.log("FEN sent to AI:", fen)
     aiWorker.postMessage({ fen, depth: 3 })
-
   }
 }
 
@@ -1991,6 +1993,7 @@ function updateAura(score: number) {
 
 
 function executeAIMove(move: { from: number, to: number }) {
+  console.log("---- AI EXEC MOVE ATTEMPT ----", move)
   const fromR = Math.floor(move.from / 8)
   const fromC = move.from % 8
   const toR = Math.floor(move.to / 8)
@@ -2001,13 +2004,25 @@ function executeAIMove(move: { from: number, to: number }) {
   const targetZ = 7 - toR
   const targetX = toC
 
-  const piece = allPieces.find(p => p.x === fromX && p.z === fromZ)
-  if (!piece) return
+  console.log(`Searching for piece at fromX:${fromX}, fromZ:${fromZ}`)
+  // Using Math.round to avoid potential float precision issues
+  const piece = allPieces.find(p => Math.round(p.x) === fromX && Math.round(p.z) === fromZ)
+
+  if (!piece) {
+    console.error(`AI Failed to find piece at ${fromX},${fromZ}! Move:`, move)
+    console.log("Current pieces state:", allPieces.map(p => `${p.type}@(${p.x},${p.z})`).join(' | '))
+    // Finalize the turn anyway so the player isn't stuck forever
+    finalizeTurn()
+    return
+  }
+
+  console.log(`Found ${piece.isWhite ? 'White' : 'Black'} ${piece.type}. Moving to ${targetX}, ${targetZ}`)
 
   // Capture logic
   const captured = getPieceAt(targetX, targetZ)
   let isCapture = false
   if (captured && captured.isWhite !== piece.isWhite) {
+    console.log(`Capturing ${captured.type} at ${targetX},${targetZ}`)
     if (captured.group) scene.remove(captured.group)
     const idx = allPieces.indexOf(captured)
     if (idx > -1) allPieces.splice(idx, 1)
@@ -2022,6 +2037,8 @@ function executeAIMove(move: { from: number, to: number }) {
 
   const targetPos = new THREE.Vector3((targetX - boardSize / 2 + 0.5) * tileSize, boardHeight, (targetZ - boardSize / 2 + 0.5) * tileSize)
 
+  console.log("Starting GSAP animation to:", targetPos)
+
   gsap.to(piece.group.position, {
     x: targetPos.x,
     y: targetPos.y,
@@ -2029,6 +2046,7 @@ function executeAIMove(move: { from: number, to: number }) {
     duration: 0.6,
     ease: "power2.inOut",
     onComplete: () => {
+      console.log("AI Move Animation Complete. Finalizing turn...")
       finalizeTurn()
     }
   })
